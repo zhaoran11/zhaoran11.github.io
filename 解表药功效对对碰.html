@@ -1,0 +1,999 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>解表药功效对对碰</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            background-color: #fff8f0;
+            font-family: 'Microsoft YaHei', sans-serif;
+            color: #5d4037;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        header {
+            text-align: center;
+            padding: 20px 0;
+            background-color: #f8e8d5;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1);
+        }
+        
+        h1 {
+            color: #8b4513;
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            text-shadow: 1px 1px 2px rgba(255, 255, 255, 0.8);
+        }
+        
+        .subtitle {
+            color: #a0522d;
+            font-size: 1.2em;
+        }
+        
+        .game-info {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 20px;
+            background-color: #fffbf5;
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+            border: 1px solid #f0d0b0;
+        }
+        
+        .score-board, .level-board {
+            background: #f8e8d5;
+            color: #8b4513;
+            padding: 10px 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+            border: 1px solid #f0d0b0;
+            font-size: 1.2em;
+            font-weight: bold;
+        }
+        
+        .game-container {
+            display: flex;
+            justify-content: center;
+            gap: 40px;
+            margin-bottom: 30px;
+            position: relative;
+        }
+        
+        .game-area {
+            display: none;
+        }
+        
+        .game-area.active {
+            display: block;
+        }
+        
+        .container-box {
+            position: relative;
+            width: 300px;
+            padding: 20px;
+            border: 1px solid #f0d0b0;
+            border-radius: 8px;
+            background-color: #fffbf5;
+        }
+        
+        .container-title {
+            text-align: center;
+            font-weight: bold;
+            margin-bottom: 15px;
+            color: #8b4513;
+            background-color: #f8e8d5;
+            padding: 8px;
+            border-radius: 4px;
+            font-size: 1.1em;
+        }
+        
+        .drugs-area {
+            display: flex;
+            flex-direction: column;
+            gap: 60px;
+            padding: 0;
+            justify-content: space-between;
+            min-height: 600px;
+        }
+        
+        .effects-area {
+            display: flex;
+            flex-direction: column;
+            gap: 60px;
+            padding: 0;
+            justify-content: space-between;
+            min-height: 600px;
+        }
+        
+        .card {
+            border: 2px solid #f0d0b0;
+            border-radius: 8px;
+            padding: 15px;
+            cursor: pointer;
+            transition: all 0.3s;
+            position: relative;
+            overflow: visible;
+            box-sizing: border-box;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+        }
+        
+        /* 为每个卡片设置独特的浅色背景 - 10种不同颜色 */
+        .color-1 { background-color: #fff0e0; } /* 浅橙 */
+        .color-2 { background-color: #e8f5e9; } /* 浅绿 */
+        .color-3 { background-color: #e3f2fd; } /* 浅蓝 */
+        .color-4 { background-color: #fff8e1; } /* 浅黄 */
+        .color-5 { background-color: #f3e5f5; } /* 浅紫 */
+        .color-6 { background-color: #e0f7fa; } /* 浅青 */
+        .color-7 { background-color: #f1f8e9; } /* 浅黄绿 */
+        .color-8 { background-color: #ede7f6; } /* 浅靛 */
+        .color-9 { background-color: #fff3e0; } /* 浅琥珀 */
+        .color-10 { background-color: #e8eaf6; } /* 浅钢蓝 */
+        
+        .drug-card, .effect-card {
+            width: 200px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            font-size: 1.1em;
+            flex-shrink: 0;
+        }
+        
+        .card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            border-color: #e0c0a0;
+        }
+        
+        .selected {
+            border-color: #8b4513;
+            background-color: #f8e8d5 !important;
+        }
+        
+        .matched {
+            border-color: #8b4513;
+            background-color: #f8e8d5 !important;
+            cursor: default;
+        }
+        
+        .connection-line {
+            position: absolute;
+            background-color: #8b4513;
+            height: 3px;
+            transform-origin: 0 0;
+            z-index: 5;
+            pointer-events: none;
+        }
+        
+        .effect-list {
+            line-height: 1.3;
+            margin-top: 5px;
+            text-align: center;
+        }
+        
+        .effect-item {
+            margin-bottom: 2px;
+        }
+        
+        @keyframes blink {
+            0% { background-color: initial; }
+            50% { background-color: #ff9999; }
+            100% { background-color: initial; }
+        }
+
+        .invalid-drop {
+            animation: blink 0.5s 2;
+        }
+        
+        .success-message {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: #f8e8d5;
+            color: #8b4513;
+            padding: 30px 50px;
+            border-radius: 15px;
+            font-size: 24px;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+            z-index: 1000;
+            border: 1px solid #f0d0b0;
+            text-align: center;
+        }
+        
+        .success-message button {
+            background: #f0d0b0;
+            color: #8b4513;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            margin-top: 20px;
+            transition: background 0.3s;
+        }
+        
+        .success-message button:hover {
+            background: #e0c0a0;
+        }
+        
+        .instructions {
+            max-width: 800px;
+            margin: 0 auto 30px;
+            background: #f8e8d5;
+            padding: 10px 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+            border: 1px solid #f0d0b0;
+        }
+        
+        #instructionsBtn {
+            background: #f0d0b0;
+            color: #8b4513;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background 0.3s;
+        }
+        
+        #instructionsBtn:hover {
+            background: #e0c0a0;
+        }
+        
+        .instructions-content {
+            display: none;
+            margin-top: 10px;
+            padding: 15px;
+            background: #fffbf5;
+            border-radius: 5px;
+            border: 1px solid #f0d0b0;
+        }
+        
+        .instructions-content h3 {
+            margin-top: 0;
+            color: #8b4513;
+        }
+        
+        .instructions-content ol,
+        .instructions-content ul {
+            margin-bottom: 0;
+            color: #5d4037;
+        }
+        
+        .nav-buttons {
+            text-align: center;
+            margin-top: 20px;
+        }
+        
+        .nav-button {
+            display: inline-block;
+            background: #f0d0b0;
+            color: #8b4513;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 0 10px;
+            text-decoration: none;
+            transition: background 0.3s;
+        }
+        
+        .nav-button:hover {
+            background: #e0c0a0;
+        }
+        
+        .start-screen {
+            text-align: center;
+            padding: 40px;
+            background-color: #fffbf5;
+            border-radius: 15px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            border: 2px solid #f0d0b0;
+            margin-top: 50px;
+        }
+        
+        .start-screen h2 {
+            color: #8b4513;
+            font-size: 2em;
+            margin-bottom: 20px;
+        }
+        
+        .start-screen p {
+            font-size: 1.2em;
+            line-height: 1.6;
+            margin-bottom: 30px;
+            color: #5d4037;
+        }
+        
+        #startBtn {
+            background: #f0d0b0;
+            color: #8b4513;
+            border: none;
+            padding: 15px 40px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1.5em;
+            transition: all 0.3s;
+            box-shadow: 0 3px 5px rgba(0, 0, 0, 0.1);
+        }
+        
+        #startBtn:hover {
+            background: #e0c0a0;
+            transform: translateY(-3px);
+            box-shadow: 0 5px 10px rgba(0, 0, 0, 0.15);
+        }
+        
+        .completion-screen {
+            display: none;
+            text-align: center;
+            padding: 40px;
+            background-color: #fffbf5;
+            border-radius: 15px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            border: 2px solid #f0d0b0;
+            margin-top: 50px;
+        }
+        
+        .completion-screen h2 {
+            color: #8b4513;
+            font-size: 2em;
+            margin-bottom: 20px;
+        }
+        
+        .completion-screen p {
+            font-size: 1.2em;
+            line-height: 1.6;
+            margin-bottom: 30px;
+            color: #5d4037;
+        }
+        
+        .level-indicator {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        
+        .level-dot {
+            width: 15px;
+            height: 15px;
+            border-radius: 50%;
+            background-color: #f0d0b0;
+        }
+        
+        .level-dot.active {
+            background-color: #8b4513;
+        }
+        
+        .level-dot.completed {
+            background-color: #5d8c3e;
+        }
+        
+        .back-button-container {
+            text-align: center;
+            margin-top: 20px;
+        }
+        
+        .back-button {
+            background: #f0d0b0;
+            color: #8b4513;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 0 10px;
+            text-decoration: none;
+            transition: background 0.3s;
+        }
+        
+        .back-button:hover {
+            background: #e0c0a0;
+        }
+        
+        .level-selector {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: #f8e8d5;
+            color: #8b4513;
+            padding: 30px 50px;
+            border-radius: 15px;
+            font-size: 18px;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+            z-index: 1000;
+            border: 1px solid #f0d0b0;
+            text-align: center;
+        }
+        
+        .level-selector h3 {
+            margin-bottom: 20px;
+            color: #8b4513;
+        }
+        
+        .level-buttons {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        
+        .level-button {
+            background: #f0d0b0;
+            color: #8b4513;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background 0.3s;
+        }
+        
+        .level-button:hover {
+            background: #e0c0a0;
+        }
+        
+        .level-button.completed {
+            background: #d4edda;
+            color: #155724;
+        }
+        
+        .level-button.active {
+            background: #8b4513;
+            color: #fff;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>解表药功效对对碰</h1>
+            <div class="subtitle">学习中医药知识，挑战你的记忆力！</div>
+        </header>
+        
+        <div class="level-indicator">
+            <div class="level-dot" id="level1-dot"></div>
+            <div class="level-dot" id="level2-dot"></div>
+            <div class="level-dot" id="level3-dot"></div>
+            <div class="level-dot" id="level4-dot"></div>
+        </div>
+        
+        <div class="game-info">
+            <div class="score-board" id="score">积分：10</div>
+            <div class="level-board" id="level">关卡：1/4</div>
+        </div>
+        
+        <div class="instructions">
+            <button id="instructionsBtn">游戏说明 ▼</button>
+            <div class="instructions-content" id="instructionsContent">
+                <h3>游戏玩法说明</h3>
+                <ol>
+                    <li><strong>游戏目标</strong>：将左侧的解表药与右侧对应的功效方框正确配对</li>
+                    <li><strong>操作方法</strong>：先点击左侧中药卡片，再点击右侧对应的功效方框</li>
+                    <li><strong>积分规则</strong>：
+                        <ul>
+                            <li>匹配成功：+1分</li>
+                            <li>匹配失败：-2分</li>
+                            <li>初始积分：10分</li>
+                            <li>积分为0时游戏重置</li>
+                        </ul>
+                    </li>
+                    <li><strong>通关条件</strong>：将所有药物与对应的功效方框匹配成功</li>
+                </ol>
+            </div>
+        </div>
+        
+        <!-- 开始屏幕 -->
+        <div class="start-screen" id="startScreen">
+            <h2>欢迎来到解表药功效对对碰！</h2>
+            <p>通过匹配中药与其功效，学习中医药知识，挑战你的记忆力！</p>
+            <p>游戏共有四个关卡，完成一个关卡后自动进入下一个关卡。</p>
+            <button id="startBtn">开始游戏</button>
+        </div>
+        
+        <!-- 第一关 -->
+        <div class="game-area" id="level1">
+            <div class="game-container" id="game-container1">
+                <div class="container-box">
+                    <div class="container-title">药物</div>
+                    <div class="drugs-area" id="drugs-column1"></div>
+                </div>
+                
+                <div class="container-box">
+                    <div class="container-title">功效</div>
+                    <div class="effects-area" id="effects-column1"></div>
+                </div>
+            </div>
+            <div class="back-button-container">
+                <button class="back-button" id="backButton1">返回关卡选择</button>
+            </div>
+        </div>
+        
+        <!-- 第二关 -->
+        <div class="game-area" id="level2">
+            <div class="game-container" id="game-container2">
+                <div class="container-box">
+                    <div class="container-title">药物</div>
+                    <div class="drugs-area" id="drugs-column2"></div>
+                </div>
+                
+                <div class="container-box">
+                    <div class="container-title">功效</div>
+                    <div class="effects-area" id="effects-column2"></div>
+                </div>
+            </div>
+            <div class="back-button-container">
+                <button class="back-button" id="backButton2">返回关卡选择</button>
+            </div>
+        </div>
+        
+        <!-- 第三关 -->
+        <div class="game-area" id="level3">
+            <div class="game-container" id="game-container3">
+                <div class="container-box">
+                    <div class="container-title">药物</div>
+                    <div class="drugs-area" id="drugs-column3"></div>
+                </div>
+                
+                <div class="container-box">
+                    <div class="container-title">功效</div>
+                    <div class="effects-area" id="effects-column3"></div>
+                </div>
+            </div>
+            <div class="back-button-container">
+                <button class="back-button" id="backButton3">返回关卡选择</button>
+            </div>
+        </div>
+        
+        <!-- 第四关 -->
+        <div class="game-area" id="level4">
+            <div class="game-container" id="game-container4">
+                <div class="container-box">
+                    <div class="container-title">药物</div>
+                    <div class="drugs-area" id="drugs-column4"></div>
+                </div>
+                
+                <div class="container-box">
+                    <div class="container-title">功效</div>
+                    <div class="effects-area" id="effects-column4"></div>
+                </div>
+            </div>
+            <div class="back-button-container">
+                <button class="back-button" id="backButton4">返回关卡选择</button>
+            </div>
+        </div>
+        
+        <!-- 完成所有关卡屏幕 -->
+        <div class="completion-screen" id="completionScreen">
+            <h2>恭喜你完成所有关卡！</h2>
+            <p>你已成功完成所有解表药功效对对碰关卡，展现了出色的中医药知识！</p>
+            <p>最终得分：<span id="finalScore">0</span> 分</p>
+            <button class="nav-button" onclick="restartGame()">重新开始游戏</button>
+        </div>
+        
+        <div class="success-message" id="successMessage">
+            <div id="successText">恭喜你通过第一关！</div>
+            <button id="nextLevelBtn">进入下一关</button>
+        </div>
+        
+        <!-- 关卡选择器 -->
+        <div class="level-selector" id="levelSelector">
+            <h3>选择关卡</h3>
+            <div class="level-buttons" id="levelButtons">
+                <!-- 关卡按钮将通过JavaScript动态生成 -->
+            </div>
+            <button class="back-button" id="closeLevelSelector">关闭</button>
+        </div>
+    </div>
+
+    <script>
+        // 游戏状态变量
+        let currentLevel = 0;
+        let score = 10;
+        let selectedDrug = null;
+        let completedLevels = [false, false, false, false];
+        let gameStarted = false;
+
+        // 处理卡片高度计算的函数
+        function adjustCardHeights(level) {
+            // 统计当前关卡所有功效卡片的总高度和数量
+            const effectCards = document.querySelectorAll(`#effects-column${level + 1} .effect-card`);
+            const effectCardCount = effectCards.length;
+            let totalEffectHeight = 0;
+            effectCards.forEach(card => {
+                totalEffectHeight += card.offsetHeight;
+            });
+
+            // 计算单个药物卡片应有的高度
+            const drugCards = document.querySelectorAll(`#drugs-column${level + 1} .drug-card`);
+            const drugCardCount = drugCards.length;
+            if (drugCardCount > 0) {
+                const singleDrugHeight = totalEffectHeight / drugCardCount;
+                // 设置每个药物卡片的高度
+                drugCards.forEach(card => {
+                    card.style.height = `${singleDrugHeight}px`;
+                });
+            }
+        }
+
+        // 生成不重复的颜色索引
+        function generateUniqueColorIndices(count) {
+            const indices = [];
+            while (indices.length < count) {
+                const randomIndex = Math.floor(Math.random() * 10) + 1; // 1-10的随机数
+                if (!indices.includes(randomIndex)) {
+                    indices.push(randomIndex);
+                }
+            }
+            return indices;
+        }
+
+        // 游戏数据 - 完整的四关数据
+        const levelData = [
+            // 第一关
+            [
+                { name: '麻黄', effects: ['发汗解表', '宣肺平喘', '利水消肿'], id: 1 },
+                { name: '桂枝', effects: ['发汗解肌', '温通经脉', '助阳化气', '平冲降逆'], id: 2 },
+                { name: '羌活', effects: ['解表散寒', '祛风除湿', '止痛'], id: 3 },
+                { name: '白芷', effects: ['解表散寒', '祛风止痛', '宣通鼻窍', '燥湿止带', '消肿排脓'], id: 4 },
+                { name: '细辛', effects: ['解表散寒', '祛风止痛', '通窍', '温肺化饮'], id: 5 }
+            ],
+            // 第二关
+            [
+                { name: '紫苏叶', effects: ['解表散寒', '行气和胃'], id: 1 },
+                { name: '荆芥', effects: ['解表散风', '透疹', '消疮'], id: 2 },
+                { name: '防风', effects: ['祛风解表', '胜湿止痛', '止痉'], id: 3 },
+                { name: '生姜', effects: ['解表散寒', '温中止呕', '化痰止咳', '解鱼蟹毒'], id: 4 }
+            ],
+            // 第三关
+            [
+                { name: '薄荷', effects: ['疏散风热', '清利头目', '利咽', '透疹', '疏肝行气'], id: 1 },
+                { name: '牛蒡子', effects: ['疏散风热', '宣肺透疹', '解毒利咽'], id: 2 },
+                { name: '蝉蜕', effects: ['疏散风热', '利咽开音', '透疹', '明目退翳', '息风止痉'], id: 3 },
+                { name: '桑叶', effects: ['疏散风热', '清肺润燥', '平抑肝阳', '清肝明目'], id: 4 },
+                { name: '菊花', effects: ['疏散风热', '平抑肝阳', '清肝明目', '清热解毒'], id: 5 }
+            ],
+            // 第四关
+            [
+                { name: '柴胡', effects: ['疏散退热', '疏肝解郁', '升举阳气'], id: 1 },
+                { name: '升麻', effects: ['发表透疹', '清热解毒', '升举阳气'], id: 2 },
+                { name: '葛根', effects: ['解肌退热', '生津止渴', '透疹', '升阳止泻', '通经活络', '解酒毒'], id: 3 },
+                { name: '蔓荆子', effects: ['疏散风热', '清利头目'], id: 4 },
+                { name: '淡豆豉', effects: ['解表', '除烦', '宣发郁热'], id: 5 }
+            ]
+        ];
+
+        // 初始化关卡
+        function initLevel(level) {
+            // 隐藏所有游戏区域
+            document.querySelectorAll('.game-area').forEach(area => {
+                area.classList.remove('active');
+            });
+            
+            // 显示当前关卡
+            document.getElementById(`level${level + 1}`).classList.add('active');
+            
+            // 更新关卡指示器
+            updateLevelIndicator();
+            
+            // 清空当前关卡的内容
+            const drugsColumn = document.getElementById(`drugs-column${level + 1}`);
+            const effectsColumn = document.getElementById(`effects-column${level + 1}`);
+            drugsColumn.innerHTML = '';
+            effectsColumn.innerHTML = '';
+            
+            // 清除所有连接线
+            document.querySelectorAll('.connection-line').forEach(line => line.remove());
+            
+            // 获取当前关卡的数据
+            const currentLevelData = levelData[level];
+            const cardCount = currentLevelData.length;
+            
+            // 生成两组不重复的颜色索引，确保药物和功效卡片颜色完全不重复
+            const drugColorIndices = generateUniqueColorIndices(cardCount);
+            const effectColorIndices = generateUniqueColorIndices(cardCount);
+            
+            // 创建药物卡片，为每个卡片分配独特颜色
+            currentLevelData.forEach((drug, index) => {
+                const drugCard = document.createElement('div');
+                // 使用生成的颜色索引，确保每个药物卡片颜色唯一
+                drugCard.className = `card drug-card color-${drugColorIndices[index]}`;
+                drugCard.dataset.id = drug.id;
+                drugCard.innerHTML = `<strong>${drug.name}</strong>`;
+                drugCard.addEventListener('click', () => selectDrug(drugCard, drug.id));
+                drugsColumn.appendChild(drugCard);
+            });
+            
+            // 创建功效卡片 - 随机排序，并为每个卡片分配独特颜色
+            const shuffledEffects = [...currentLevelData].sort(() => Math.random() - 0.5);
+            shuffledEffects.forEach((effect, index) => {
+                const effectCard = document.createElement('div');
+                // 使用生成的颜色索引，确保每个功效卡片颜色唯一且与药物卡片不重复
+                effectCard.className = `card effect-card color-${effectColorIndices[index]}`;
+                effectCard.dataset.id = effect.id;
+                
+                let effectsHtml = '';
+                effect.effects.forEach(eff => {
+                    effectsHtml += `<div class="effect-item">${eff}</div>`;
+                });
+                
+                effectCard.innerHTML = `<div class="effect-list">${effectsHtml}</div>`;
+                effectCard.addEventListener('click', () => selectEffect(effectCard, effect.id));
+                effectsColumn.appendChild(effectCard);
+            });
+            
+            // 调整卡片高度
+            adjustCardHeights(level);
+        }
+
+        // 选择药物卡片
+        function selectDrug(card, drugId) {
+            // 如果已经匹配，不能再选择
+            if (card.classList.contains('matched')) return;
+            
+            // 移除其他卡片的选中状态
+            document.querySelectorAll('.drug-card').forEach(c => {
+                c.classList.remove('selected');
+            });
+            
+            // 设置当前选中卡片
+            card.classList.add('selected');
+            selectedDrug = { element: card, id: drugId };
+        }
+
+        // 选择功效卡片
+        function selectEffect(card, effectId) {
+            // 如果没有选中药物，不能选择功效
+            if (!selectedDrug) return;
+            
+            // 如果已经匹配，不能再选择
+            if (card.classList.contains('matched')) return;
+            
+            // 检查是否匹配
+            if (selectedDrug.id === effectId) {
+                // 匹配成功
+                selectedDrug.element.classList.add('matched');
+                selectedDrug.element.classList.remove('selected');
+                card.classList.add('matched');
+                
+                // 创建连接线
+                createConnectionLine(selectedDrug.element, card);
+                
+                // 增加分数
+                score += 1;
+                updateScore();
+                
+                // 检查是否所有卡片都已匹配
+                checkLevelCompletion();
+            } else {
+                // 匹配失败
+                card.classList.add('invalid-drop');
+                setTimeout(() => {
+                    card.classList.remove('invalid-drop');
+                }, 1000);
+                
+                // 减少分数
+                score -= 2;
+                updateScore();
+                
+                // 检查分数是否为0
+                if (score <= 0) {
+                    alert('积分已用完，游戏将重置！');
+                    resetGame();
+                    return;
+                }
+            }
+            
+            // 清除选中状态
+            selectedDrug = null;
+        }
+
+        // 创建连接线
+        function createConnectionLine(drugCard, effectCard) {
+            const gameContainer = drugCard.closest('.game-container');
+            const drugRect = drugCard.getBoundingClientRect();
+            const effectRect = effectCard.getBoundingClientRect();
+            const containerRect = gameContainer.getBoundingClientRect();
+            
+            // 计算线的起点和终点（相对于游戏容器）
+            const startX = drugRect.right - containerRect.left;
+            const startY = drugRect.top + drugRect.height / 2 - containerRect.top;
+            const endX = effectRect.left - containerRect.left;
+            const endY = effectRect.top + effectRect.height / 2 - containerRect.top;
+            
+            // 计算线的长度和角度
+            const length = Math.sqrt(Math.pow(endX - startX, 2) + Math.pow(endY - startY, 2));
+            const angle = Math.atan2(endY - startY, endX - startX) * 180 / Math.PI;
+            
+            // 创建线元素
+            const line = document.createElement('div');
+            line.className = 'connection-line';
+            line.style.width = `${length}px`;
+            line.style.left = `${startX}px`;
+            line.style.top = `${startY}px`;
+            line.style.transform = `rotate(${angle}deg)`;
+            
+            gameContainer.appendChild(line);
+        }
+
+        // 检查关卡是否完成
+        function checkLevelCompletion() {
+            const totalCards = document.querySelectorAll(`#level${currentLevel + 1} .drug-card`).length;
+            const matchedCards = document.querySelectorAll(`#level${currentLevel + 1} .drug-card.matched`).length;
+            
+            if (totalCards === matchedCards) {
+                // 标记关卡为已完成
+                completedLevels[currentLevel] = true;
+                
+                // 显示成功消息
+                document.getElementById('successText').textContent = `恭喜你通过第${currentLevel + 1}关！`;
+                document.getElementById('successMessage').style.display = 'block';
+                
+                // 更新关卡指示器
+                updateLevelIndicator();
+            }
+        }
+
+        // 更新分数
+        function updateScore() {
+            document.getElementById('score').textContent = `积分：${score}`;
+        }
+
+        // 更新关卡指示器
+        function updateLevelIndicator() {
+            document.getElementById('level').textContent = `关卡：${currentLevel + 1}/4`;
+            
+            // 更新关卡点
+            for (let i = 0; i < 4; i++) {
+                const dot = document.getElementById(`level${i + 1}-dot`);
+                dot.classList.remove('active', 'completed');
+                
+                if (i === currentLevel) {
+                    dot.classList.add('active');
+                } else if (completedLevels[i]) {
+                    dot.classList.add('completed');
+                }
+            }
+            
+            // 更新关卡选择按钮
+            updateLevelButtons();
+        }
+
+        // 更新关卡选择按钮
+        function updateLevelButtons() {
+            const levelButtons = document.getElementById('levelButtons');
+            levelButtons.innerHTML = '';
+            
+            for (let i = 0; i < 4; i++) {
+                const button = document.createElement('button');
+                button.className = 'level-button';
+                button.textContent = `第${i + 1}关`;
+                
+                // 只有已完成的关卡或当前关卡可以选择
+                if (i === currentLevel || completedLevels[i]) {
+                    button.addEventListener('click', () => {
+                        currentLevel = i;
+                        document.getElementById('levelSelector').style.display = 'none';
+                        initLevel(currentLevel);
+                    });
+                    
+                    if (i === currentLevel) {
+                        button.classList.add('active');
+                    } else if (completedLevels[i]) {
+                        button.classList.add('completed');
+                    }
+                } else {
+                    button.disabled = true;
+                    button.style.opacity = '0.5';
+                    button.style.cursor = 'not-allowed';
+                }
+                
+                levelButtons.appendChild(button);
+            }
+        }
+
+        // 进入下一关
+        function nextLevel() {
+            document.getElementById('successMessage').style.display = 'none';
+            
+            if (currentLevel < 3) {
+                currentLevel++;
+                initLevel(currentLevel);
+            } else {
+                // 完成所有关卡
+                document.querySelectorAll('.game-area').forEach(area => {
+                    area.classList.remove('active');
+                });
+                document.getElementById('finalScore').textContent = score;
+                document.getElementById('completionScreen').style.display = 'block';
+            }
+        }
+
+        // 重置游戏
+        function resetGame() {
+            score = 10;
+            currentLevel = 0;
+            completedLevels = [false, false, false, false];
+            selectedDrug = null;
+            
+            updateScore();
+            document.getElementById('completionScreen').style.display = 'none';
+            document.getElementById('startScreen').style.display = 'block';
+        }
+
+        // 显示关卡选择器
+        function showLevelSelector() {
+            document.getElementById('levelSelector').style.display = 'block';
+        }
+
+        // 关闭关卡选择器
+        function closeLevelSelector() {
+            document.getElementById('levelSelector').style.display = 'none';
+        }
+
+        // 开始游戏
+        function startGame() {
+            document.getElementById('startScreen').style.display = 'none';
+            gameStarted = true;
+            currentLevel = 0;
+            initLevel(currentLevel);
+        }
+
+        // 初始化事件监听
+        function initEventListeners() {
+            // 开始按钮
+            document.getElementById('startBtn').addEventListener('click', startGame);
+            
+            // 下一关按钮
+            document.getElementById('nextLevelBtn').addEventListener('click', nextLevel);
+            
+            // 游戏说明按钮
+            document.getElementById('instructionsBtn').addEventListener('click', () => {
+                const content = document.getElementById('instructionsContent');
+                content.style.display = content.style.display === 'block' ? 'none' : 'block';
+            });
+            
+            // 返回关卡选择按钮
+            document.getElementById('backButton1').addEventListener('click', showLevelSelector);
+            document.getElementById('backButton2').addEventListener('click', showLevelSelector);
+            document.getElementById('backButton3').addEventListener('click', showLevelSelector);
+            document.getElementById('backButton4').addEventListener('click', showLevelSelector);
+            
+            // 关闭关卡选择器按钮
+            document.getElementById('closeLevelSelector').addEventListener('click', closeLevelSelector);
+        }
+
+        // 页面加载完成后初始化
+        window.addEventListener('DOMContentLoaded', () => {
+            initEventListeners();
+            updateScore();
+        });
+    </script>
+</body>
+</html>
+    
