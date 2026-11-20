@@ -1,0 +1,1992 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>解表药知识图谱 · 以证统药</title>
+<style>
+  :root {
+    --paper: #f3eee3;
+    --paper-2: #fbf8f1;
+    --ink: #211d18;
+    --ink-2: #4a4238;
+    --muted: #7b7164;
+    --line: #d9cfbf;
+    --line-soft: #e7dfd1;
+    --cinnabar: #a63d2f;
+    --cinnabar-soft: #f3e2dc;
+    --jade: #3f6b5a;
+    --jade-soft: #e3ece7;
+    --gold: #9a7a45;
+    --gold-soft: #f1e7d4;
+    --shadow: 0 18px 44px rgba(33, 29, 24, 0.08);
+    --serif: "Songti SC", "Noto Serif SC", "STSong", "SimSun", serif;
+    --sans: "PingFang SC", "Noto Sans SC", "Microsoft YaHei", system-ui, -apple-system, sans-serif;
+  }
+
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    margin: 0;
+    min-height: 100vh;
+    background: var(--paper);
+    color: var(--ink);
+    font-family: var(--sans);
+    -webkit-font-smoothing: antialiased;
+  }
+  button, input { font: inherit; }
+  button { color: inherit; }
+  ::selection { background: var(--cinnabar-soft); color: var(--ink); }
+
+  .app {
+    display: grid;
+    grid-template-columns: 296px minmax(0, 1fr);
+    min-height: 100vh;
+  }
+
+  /* ---------- sidebar ---------- */
+  .sidebar {
+    position: sticky;
+    top: 0;
+    height: 100vh;
+    overflow-y: auto;
+    padding: 28px 18px 24px;
+    background: #221e19;
+    color: #f3eee3;
+    border-right: 1px solid rgba(255, 255, 255, 0.06);
+  }
+  .brand {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 0 8px;
+  }
+  .seal {
+    width: 46px;
+    height: 46px;
+    flex: 0 0 46px;
+    display: grid;
+    place-items: center;
+    background: var(--cinnabar);
+    color: #fff8ee;
+    font-family: var(--serif);
+    font-size: 24px;
+    border-radius: 4px;
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.22);
+  }
+  .brand h1 {
+    margin: 0;
+    font-family: var(--serif);
+    font-size: 23px;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+  }
+  .brand p {
+    margin: 3px 0 0;
+    font-size: 11px;
+    letter-spacing: 0.12em;
+    color: rgba(243, 238, 227, 0.5);
+  }
+  .search {
+    position: relative;
+    margin: 26px 8px 18px;
+  }
+  .search input {
+    width: 100%;
+    padding: 10px 12px 10px 34px;
+    border: 1px solid rgba(243, 238, 227, 0.14);
+    border-radius: 7px;
+    outline: none;
+    background: rgba(255, 255, 255, 0.045);
+    color: #f3eee3;
+    font-size: 13px;
+    transition: border-color 0.18s, background 0.18s;
+  }
+  .search input::placeholder { color: rgba(243, 238, 227, 0.36); }
+  .search input:focus {
+    border-color: rgba(243, 238, 227, 0.34);
+    background: rgba(255, 255, 255, 0.07);
+  }
+  .search svg {
+    position: absolute;
+    left: 11px;
+    top: 50%;
+    width: 14px;
+    height: 14px;
+    transform: translateY(-50%);
+    stroke: rgba(243, 238, 227, 0.4);
+    fill: none;
+    stroke-width: 1.8;
+  }
+  .nav { padding-bottom: 12px; }
+  .nav-group { margin-bottom: 16px; }
+  .nav-group-title {
+    padding: 0 10px;
+    margin-bottom: 5px;
+    font-size: 10px;
+    letter-spacing: 0.16em;
+    color: rgba(243, 238, 227, 0.38);
+  }
+  .nav-item {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    padding: 9px 10px;
+    border: 0;
+    border-radius: 6px;
+    background: transparent;
+    color: rgba(243, 238, 227, 0.76);
+    text-align: left;
+    font-size: 13px;
+    cursor: pointer;
+    transition: background 0.16s, color 0.16s, box-shadow 0.16s;
+  }
+  .nav-item:hover {
+    background: rgba(255, 255, 255, 0.06);
+    color: #fff;
+  }
+  .nav-item.active {
+    background: rgba(166, 61, 47, 0.24);
+    color: #fff;
+    box-shadow: inset 3px 0 0 var(--cinnabar);
+  }
+  .nav-count {
+    flex: 0 0 auto;
+    min-width: 22px;
+    padding: 1px 7px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.08);
+    color: rgba(243, 238, 227, 0.6);
+    font-size: 10px;
+    text-align: center;
+  }
+  .nav-item.active .nav-count {
+    background: rgba(255, 255, 255, 0.14);
+    color: #fff;
+  }
+  .nav-empty {
+    padding: 12px 10px;
+    font-size: 12px;
+    line-height: 1.7;
+    color: rgba(243, 238, 227, 0.42);
+  }
+  .sidebar-foot {
+    margin: 24px 8px 0;
+    padding-top: 16px;
+    border-top: 1px solid rgba(243, 238, 227, 0.1);
+    font-size: 11px;
+    line-height: 1.8;
+    color: rgba(243, 238, 227, 0.36);
+  }
+  .sidebar-foot b {
+    display: block;
+    margin-bottom: 3px;
+    color: rgba(243, 238, 227, 0.62);
+    font-weight: 500;
+  }
+
+  /* ---------- main ---------- */
+  .main {
+    min-width: 0;
+    padding: 28px 36px 72px;
+  }
+  .topbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 18px;
+    margin-bottom: 22px;
+  }
+  .crumb {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 12px;
+    color: var(--muted);
+  }
+  .crumb .root { color: var(--cinnabar); font-weight: 500; }
+  .crumb .sep { color: #b8aa96; }
+  .crumb strong { color: var(--ink); font-weight: 500; }
+  .stats {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 7px;
+  }
+  .stat {
+    padding: 5px 11px;
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    background: var(--paper-2);
+    font-size: 11px;
+    color: var(--muted);
+    white-space: nowrap;
+  }
+  .stat b {
+    margin-right: 2px;
+    color: var(--ink);
+    font-family: var(--serif);
+    font-size: 14px;
+    font-weight: 600;
+  }
+
+  /* ---------- hero ---------- */
+  .hero {
+    position: relative;
+    overflow: hidden;
+    padding: 34px 36px 30px;
+    border: 1px solid var(--line);
+    border-radius: 18px;
+    background: var(--paper-2);
+    box-shadow: var(--shadow);
+  }
+  .hero::after {
+    content: "以证统药";
+    position: absolute;
+    top: 30px;
+    right: 34px;
+    writing-mode: vertical-rl;
+    font-family: var(--serif);
+    font-size: 54px;
+    letter-spacing: 0.16em;
+    color: rgba(166, 61, 47, 0.055);
+    pointer-events: none;
+  }
+  .eyebrow {
+    font-size: 11px;
+    letter-spacing: 0.2em;
+    color: var(--cinnabar);
+  }
+  .hero h2 {
+    margin: 8px 0 10px;
+    font-family: var(--serif);
+    font-size: clamp(32px, 4.2vw, 50px);
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    line-height: 1.18;
+  }
+  .hero-lead {
+    max-width: 720px;
+    margin: 0;
+    font-size: 14px;
+    line-height: 1.85;
+    color: var(--ink-2);
+  }
+  .hero-stats {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 22px;
+    margin-top: 24px;
+  }
+  .hero-stat {
+    padding-left: 12px;
+    border-left: 2px solid var(--cinnabar);
+  }
+  .hero-stat b {
+    display: block;
+    font-family: var(--serif);
+    font-size: 22px;
+    font-weight: 600;
+    line-height: 1.2;
+  }
+  .hero-stat span {
+    display: block;
+    margin-top: 2px;
+    font-size: 11px;
+    color: var(--muted);
+    letter-spacing: 0.08em;
+  }
+  .hero-action {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 24px;
+    padding: 9px 15px;
+    border: 1px solid var(--cinnabar);
+    border-radius: 999px;
+    background: var(--cinnabar);
+    color: #fff8ee;
+    font-size: 12px;
+    cursor: pointer;
+    transition: background 0.18s, transform 0.18s;
+  }
+  .hero-action:hover {
+    background: #8f3025;
+    transform: translateY(-1px);
+  }
+
+  /* ---------- flow strip ---------- */
+  .flow-strip {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+    margin: 22px 0 4px;
+    padding: 12px 14px;
+    border: 1px solid var(--line-soft);
+    border-radius: 10px;
+    background: rgba(251, 248, 241, 0.66);
+  }
+  .flow-strip-label {
+    margin-right: 4px;
+    font-size: 10px;
+    letter-spacing: 0.14em;
+    color: var(--muted);
+  }
+  .flow-pill {
+    padding: 4px 9px;
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    background: var(--paper-2);
+    font-size: 11px;
+    color: var(--ink-2);
+    white-space: nowrap;
+  }
+  .flow-pill.accent {
+    border-color: #dcb8ad;
+    background: var(--cinnabar-soft);
+    color: var(--cinnabar);
+    font-weight: 500;
+  }
+  .flow-pill.muted { color: var(--muted); border-style: dashed; }
+  .flow-arrow { color: #b8aa96; font-size: 12px; }
+  .flow-arrow.dashed { color: var(--gold); }
+
+  /* ---------- section head / grid ---------- */
+  .section-head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 16px;
+    margin: 30px 0 14px;
+  }
+  .section-head h3 {
+    margin: 0;
+    font-family: var(--serif);
+    font-size: 21px;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+  }
+  .section-head p {
+    margin: 0;
+    font-size: 12px;
+    color: var(--muted);
+    text-align: right;
+  }
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(286px, 1fr));
+    gap: 15px;
+  }
+  .syndrome-card {
+    position: relative;
+    padding: 19px 19px 15px;
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    background: var(--paper-2);
+    cursor: pointer;
+    transition: transform 0.18s, box-shadow 0.18s, border-color 0.18s;
+    outline: none;
+  }
+  .syndrome-card:hover,
+  .syndrome-card:focus-visible {
+    transform: translateY(-3px);
+    border-color: #cbb8a0;
+    box-shadow: 0 14px 28px rgba(33, 29, 24, 0.09);
+  }
+  .syndrome-card:focus-visible { outline: 2px solid var(--cinnabar); outline-offset: 3px; }
+  .card-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+  }
+  .tag {
+    display: inline-flex;
+    align-items: center;
+    padding: 3px 8px;
+    border-radius: 999px;
+    background: var(--cinnabar-soft);
+    color: var(--cinnabar);
+    font-size: 10px;
+    letter-spacing: 0.04em;
+  }
+  .tag.jade { background: var(--jade-soft); color: var(--jade); }
+  .tag.gold { background: var(--gold-soft); color: var(--gold); }
+  .card-arrow {
+    color: #b8aa96;
+    font-size: 15px;
+    transition: transform 0.18s, color 0.18s;
+  }
+  .syndrome-card:hover .card-arrow { transform: translateX(3px); color: var(--cinnabar); }
+  .syndrome-card h4 {
+    margin: 10px 0 6px;
+    font-family: var(--serif);
+    font-size: 21px;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+  }
+  .card-symptoms {
+    min-height: 44px;
+    margin: 0;
+    font-size: 12.5px;
+    line-height: 1.72;
+    color: var(--muted);
+  }
+  .card-method {
+    margin-top: 12px;
+    padding-top: 11px;
+    border-top: 1px dashed var(--line-soft);
+    font-size: 12.5px;
+    line-height: 1.65;
+    color: var(--ink-2);
+  }
+  .card-method span {
+    margin-right: 6px;
+    color: var(--jade);
+    font-size: 10px;
+    letter-spacing: 0.1em;
+  }
+  .card-herbs {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+    margin-top: 12px;
+  }
+  .herb-chip {
+    padding: 2px 7px;
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    background: var(--paper);
+    font-size: 11px;
+    color: var(--ink-2);
+    white-space: nowrap;
+  }
+  .herb-chip.more { color: var(--muted); border-style: dashed; }
+  .card-foot {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-top: 13px;
+    padding-top: 11px;
+    border-top: 1px solid var(--line-soft);
+    font-size: 10.5px;
+    color: var(--muted);
+  }
+  .card-foot .ext { color: var(--gold); }
+  .empty-state {
+    grid-column: 1 / -1;
+    padding: 44px 20px;
+    border: 1px dashed var(--line);
+    border-radius: 14px;
+    text-align: center;
+    color: var(--muted);
+    font-size: 13px;
+  }
+
+  /* ---------- detail ---------- */
+  .detail-head {
+    position: relative;
+    overflow: hidden;
+    padding: 28px 30px 24px;
+    border: 1px solid var(--line);
+    border-radius: 18px;
+    background: var(--paper-2);
+    box-shadow: var(--shadow);
+  }
+  .detail-head::after {
+    content: attr(data-mark);
+    position: absolute;
+    right: 30px;
+    bottom: -18px;
+    font-family: var(--serif);
+    font-size: 92px;
+    line-height: 1;
+    color: rgba(166, 61, 47, 0.055);
+    pointer-events: none;
+  }
+  .detail-head h2 {
+    margin: 8px 0 8px;
+    font-family: var(--serif);
+    font-size: clamp(28px, 3.2vw, 40px);
+    font-weight: 600;
+    letter-spacing: 0.05em;
+  }
+  .detail-symptoms {
+    max-width: 760px;
+    margin: 0;
+    font-size: 13.5px;
+    line-height: 1.8;
+    color: var(--ink-2);
+  }
+  .relation-bar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px;
+    margin-top: 20px;
+  }
+  .rel {
+    padding: 5px 9px;
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    background: var(--paper);
+    font-size: 11px;
+    color: var(--ink-2);
+  }
+  .rel.root { border-color: #dcb8ad; background: var(--cinnabar-soft); color: var(--cinnabar); }
+  .rel.active { border-color: var(--cinnabar); background: var(--cinnabar); color: #fff; }
+  .rel.muted { color: var(--muted); border-style: dashed; }
+  .rel-arrow { color: #b8aa96; font-size: 11px; }
+
+  .timeline {
+    position: relative;
+    margin-top: 24px;
+    padding-left: 42px;
+  }
+  .timeline::before {
+    content: "";
+    position: absolute;
+    left: 15px;
+    top: 10px;
+    bottom: 24px;
+    width: 1px;
+    background: var(--line);
+  }
+  .step {
+    position: relative;
+    margin-bottom: 18px;
+  }
+  .step-num {
+    position: absolute;
+    left: -42px;
+    top: 0;
+    width: 31px;
+    height: 31px;
+    display: grid;
+    place-items: center;
+    border: 1px solid var(--line);
+    border-radius: 50%;
+    background: var(--paper);
+    color: var(--cinnabar);
+    font-family: var(--serif);
+    font-size: 13px;
+    font-weight: 600;
+  }
+  .step.focus .step-num {
+    border-color: var(--cinnabar);
+    background: var(--cinnabar);
+    color: #fff;
+  }
+  .step-card {
+    padding: 20px 22px;
+    border: 1px solid var(--line);
+    border-radius: 13px;
+    background: var(--paper-2);
+  }
+  .step-card.plain {
+    background: rgba(251, 248, 241, 0.56);
+  }
+  .step-label {
+    font-size: 10px;
+    letter-spacing: 0.16em;
+    color: var(--muted);
+  }
+  .step-label.accent { color: var(--cinnabar); }
+  .step-label.jade { color: var(--jade); }
+  .step-card h3 {
+    margin: 6px 0 7px;
+    font-family: var(--serif);
+    font-size: 20px;
+    font-weight: 600;
+    line-height: 1.45;
+    letter-spacing: 0.03em;
+  }
+  .step-card p {
+    margin: 0;
+    font-size: 13px;
+    line-height: 1.85;
+    color: var(--ink-2);
+  }
+  .mini-note {
+    margin-top: 12px;
+    padding: 9px 11px;
+    border-left: 2px solid var(--gold);
+    background: var(--gold-soft);
+    font-size: 11.5px;
+    line-height: 1.7;
+    color: #6b532b;
+  }
+
+  .herb-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(178px, 1fr));
+    gap: 9px;
+    margin-top: 14px;
+  }
+  .herb-card {
+    padding: 12px 13px;
+    border: 1px solid var(--line);
+    border-radius: 9px;
+    background: var(--paper);
+    cursor: pointer;
+    outline: none;
+    transition: border-color 0.16s, background 0.16s, transform 0.16s;
+  }
+  .herb-card:hover,
+  .herb-card:focus-visible {
+    border-color: var(--cinnabar);
+    background: #fffdf8;
+    transform: translateY(-1px);
+  }
+  .herb-card:focus-visible { outline: 2px solid var(--cinnabar); outline-offset: 2px; }
+  .herb-card-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+  }
+  .herb-name {
+    font-family: var(--serif);
+    font-size: 18px;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+  }
+  .role {
+    flex: 0 0 auto;
+    padding: 2px 6px;
+    border-radius: 999px;
+    font-size: 9.5px;
+    letter-spacing: 0.04em;
+  }
+  .role.role-main { background: var(--cinnabar-soft); color: var(--cinnabar); }
+  .role.role-common { background: var(--jade-soft); color: var(--jade); }
+  .role.role-assist { background: var(--gold-soft); color: var(--gold); }
+  .herb-nature {
+    margin-top: 5px;
+    font-size: 10.5px;
+    line-height: 1.5;
+    color: var(--muted);
+  }
+  .herb-effect {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    margin: 6px 0 0;
+    font-size: 11.5px;
+    line-height: 1.6;
+    color: var(--ink-2);
+  }
+  .herb-more {
+    margin-top: 7px;
+    font-size: 10px;
+    color: var(--cinnabar);
+  }
+
+  .extension-note {
+    margin: 12px 0 13px;
+    padding: 9px 11px;
+    border: 1px solid #e3d2b0;
+    border-radius: 8px;
+    background: var(--gold-soft);
+    font-size: 11.5px;
+    line-height: 1.7;
+    color: #6b532b;
+  }
+  .formula-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(196px, 1fr));
+    gap: 9px;
+  }
+  .formula-card {
+    padding: 12px 13px;
+    border: 1px dashed #cdbb9f;
+    border-radius: 9px;
+    background: rgba(241, 231, 212, 0.28);
+    cursor: pointer;
+    outline: none;
+    transition: border-color 0.16s, background 0.16s, transform 0.16s;
+  }
+  .formula-card:hover,
+  .formula-card:focus-visible {
+    border-color: var(--gold);
+    background: var(--gold-soft);
+    transform: translateY(-1px);
+  }
+  .formula-card:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
+  .formula-card-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+  }
+  .formula-name {
+    font-family: var(--serif);
+    font-size: 16px;
+    font-weight: 600;
+  }
+  .ext-tag {
+    padding: 1px 6px;
+    border: 1px solid #d8c29c;
+    border-radius: 999px;
+    font-size: 9px;
+    color: var(--gold);
+    white-space: nowrap;
+  }
+  .formula-func {
+    margin-top: 5px;
+    font-size: 11px;
+    line-height: 1.55;
+    color: var(--cinnabar);
+  }
+  .formula-comp {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    margin-top: 5px;
+    font-size: 10.5px;
+    line-height: 1.55;
+    color: var(--muted);
+  }
+
+  /* ---------- drawer ---------- */
+  .overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 18;
+    background: rgba(33, 29, 24, 0.38);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.22s;
+  }
+  .overlay.open { opacity: 1; pointer-events: auto; }
+  .drawer {
+    position: fixed;
+    top: 0;
+    right: 0;
+    z-index: 20;
+    width: min(440px, 94vw);
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    background: var(--paper-2);
+    border-left: 1px solid var(--line);
+    box-shadow: -24px 0 60px rgba(33, 29, 24, 0.18);
+    transform: translateX(102%);
+    transition: transform 0.26s cubic-bezier(0.22, 0.8, 0.3, 1);
+  }
+  .drawer.open { transform: translateX(0); }
+  .drawer-head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 24px 24px 18px;
+    border-bottom: 1px solid var(--line);
+  }
+  .drawer-kicker {
+    font-size: 10px;
+    letter-spacing: 0.16em;
+    color: var(--cinnabar);
+  }
+  .drawer-head h3 {
+    margin: 6px 0 0;
+    font-family: var(--serif);
+    font-size: 28px;
+    font-weight: 600;
+    letter-spacing: 0.05em;
+  }
+  .close-btn {
+    flex: 0 0 32px;
+    width: 32px;
+    height: 32px;
+    display: grid;
+    place-items: center;
+    border: 1px solid var(--line);
+    border-radius: 50%;
+    background: transparent;
+    color: var(--muted);
+    cursor: pointer;
+    transition: background 0.16s, color 0.16s, border-color 0.16s;
+  }
+  .close-btn:hover {
+    border-color: var(--cinnabar);
+    background: var(--cinnabar-soft);
+    color: var(--cinnabar);
+  }
+  .drawer-body {
+    flex: 1;
+    overflow-y: auto;
+    padding: 22px 24px 40px;
+  }
+  .field { margin-bottom: 18px; }
+  .field-label {
+    margin-bottom: 5px;
+    font-size: 10px;
+    letter-spacing: 0.14em;
+    color: var(--muted);
+  }
+  .field-value {
+    font-size: 13px;
+    line-height: 1.8;
+    color: var(--ink-2);
+  }
+  .field-value.serif {
+    font-family: var(--serif);
+    font-size: 17px;
+    line-height: 1.6;
+    color: var(--ink);
+  }
+  .chip-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+  }
+  .chip {
+    padding: 3px 8px;
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    background: var(--paper);
+    font-size: 11px;
+    color: var(--ink-2);
+  }
+  .chip.cinnabar { border-color: #dcb8ad; background: var(--cinnabar-soft); color: var(--cinnabar); }
+  .chip.gold { border-color: #e3d2b0; background: var(--gold-soft); color: var(--gold); }
+  .drawer-note {
+    margin-top: 22px;
+    padding-top: 16px;
+    border-top: 1px solid var(--line);
+    font-size: 11px;
+    line-height: 1.75;
+    color: var(--muted);
+  }
+  .drawer-empty {
+    padding: 22px 0;
+    font-size: 12px;
+    color: var(--muted);
+  }
+
+  /* ---------- responsive ---------- */
+  @media (max-width: 980px) {
+    .app { grid-template-columns: 1fr; }
+    .sidebar {
+      position: relative;
+      height: auto;
+      max-height: none;
+      border-right: 0;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    }
+    .nav { max-height: 260px; overflow-y: auto; }
+    .sidebar-foot { display: none; }
+    .main { padding: 22px 20px 56px; }
+  }
+  @media (max-width: 620px) {
+    .main { padding: 18px 14px 48px; }
+    .topbar { align-items: flex-start; flex-direction: column; gap: 10px; }
+    .hero { padding: 26px 22px 24px; }
+    .hero::after { display: none; }
+    .hero h2 { font-size: 34px; }
+    .hero-stats { gap: 16px; }
+    .section-head { align-items: flex-start; flex-direction: column; gap: 4px; }
+    .section-head p { text-align: left; }
+    .detail-head { padding: 24px 20px 20px; }
+    .detail-head::after { right: 16px; font-size: 66px; }
+    .timeline { padding-left: 0; }
+    .timeline::before { display: none; }
+    .step-num { position: static; margin-bottom: 8px; }
+    .step-card { padding: 17px 16px; }
+    .herb-grid, .formula-grid { grid-template-columns: 1fr 1fr; }
+  }
+  @media (max-width: 420px) {
+    .herb-grid, .formula-grid { grid-template-columns: 1fr; }
+    .brand h1 { font-size: 21px; }
+  }
+  @media print {
+    body { background: #fff; }
+    .sidebar, .topbar, .drawer, .overlay, .hero-action, .flow-strip { display: none !important; }
+    .app { display: block; }
+    .main { padding: 0; }
+    .hero, .detail-head, .step-card, .syndrome-card { box-shadow: none; break-inside: avoid; }
+  }
+</style>
+</head>
+<body>
+<div class="app">
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="seal">表</div>
+      <div>
+        <h1>解表药</h1>
+        <p>以证统药 · 知识图谱</p>
+      </div>
+    </div>
+    <div class="search">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="M16.5 16.5 21 21"></path></svg>
+      <input id="searchInput" type="search" placeholder="搜证候、症状、中药" aria-label="搜索证候、症状或中药">
+    </div>
+    <nav class="nav" id="syndromeNav" aria-label="表证分类导航"></nav>
+    <div class="sidebar-foot">
+      <b>中药学 · 表证篇</b>
+      先辨证候，再明理法，落到中药；方剂作为药物后的配伍拓展，不作为先修要求。
+    </div>
+  </aside>
+
+  <main class="main">
+    <div class="topbar">
+      <div class="crumb" id="crumb">
+        <span class="root">表证</span>
+        <span class="sep">/</span>
+        <strong id="crumbName">谱系总览</strong>
+      </div>
+      <div class="stats" id="stats"></div>
+    </div>
+    <div id="view"></div>
+  </main>
+</div>
+
+<div class="overlay" id="overlay" data-close></div>
+<aside class="drawer" id="drawer" aria-hidden="true" aria-label="详情面板">
+  <div id="drawerContent"></div>
+</aside>
+
+<noscript>
+  <div style="padding:24px;font-family:sans-serif;">此页面需要启用 JavaScript 才能查看知识图谱。</div>
+</noscript>
+
+<script>
+const KG = {
+  groups: ["风寒表证", "风热表证", "兼夹证", "其他", "虚人外感"],
+  herbs: {
+    "麻黄": {
+      nature: "辛、微苦，温",
+      meridian: "归肺、膀胱经",
+      effects: "发汗解表，宣肺平喘，利水消肿，散寒通滞",
+      usage: "2～10g。发汗解表宜生用，止咳平喘多蜜炙；麻黄绒作用缓和。",
+      caution: "表虚自汗、阴虚盗汗、肺肾虚喘者慎用；高血压、失眠者慎用。",
+      pairs: "麻黄-桂枝（相须发汗）、麻黄-杏仁（宣降平喘）、麻黄-石膏（宣肺清热）、麻黄-附子（助阳解表）。"
+    },
+    "桂枝": {
+      nature: "辛、甘，温",
+      meridian: "归心、肺、膀胱经",
+      effects: "发汗解肌，温通经脉，助阳化气，平冲降气",
+      usage: "3～10g。发汗解肌宜生用，温经通阳多炒用。",
+      caution: "热病高热、阴虚火旺、血热妄行者慎用；孕妇及月经过多者慎用。",
+      pairs: "桂枝-白芍（调和营卫）、桂枝-麻黄（相须发汗）、桂枝-茯苓（温阳化气利水）。"
+    },
+    "荆芥": {
+      nature: "辛，微温",
+      meridian: "归肺、肝经",
+      effects: "解表散风，透疹，消疮",
+      usage: "5～10g。发表透疹宜生用，止血宜炒炭。",
+      caution: "表虚自汗、阴虚头痛者慎用。",
+      pairs: "荆芥-防风（相须解表）、荆芥-薄荷（疏风透疹）、荆芥-蝉蜕（祛风止痒）。"
+    },
+    "防风": {
+      nature: "辛、甘，微温",
+      meridian: "归膀胱、肝、脾经",
+      effects: "祛风解表，胜湿止痛，止痉",
+      usage: "5～10g。",
+      caution: "阴血亏虚、热病动风者慎用。",
+      pairs: "防风-荆芥（相须解表）、防风-羌活（祛风胜湿）、防风-黄芪（益气固表）。"
+    },
+    "羌活": {
+      nature: "辛、苦，温",
+      meridian: "归膀胱、肾经",
+      effects: "解表散寒，祛风除湿，止痛",
+      usage: "3～10g。",
+      caution: "辛温香燥，阴血亏虚者慎用；用量过大易致呕吐。",
+      pairs: "羌活-独活（上下分治）、羌活-防风（祛风胜湿止痛）。"
+    },
+    "白芷": {
+      nature: "辛，温",
+      meridian: "归胃、大肠、肺经",
+      effects: "解表散寒，祛风止痛，通鼻窍，燥湿止带，消肿排脓",
+      usage: "3～10g。",
+      caution: "阴虚血热者慎用；痈疽溃后脓尽者不宜多用。",
+      pairs: "白芷-辛夷（通鼻窍）、白芷-川芎（祛风止痛）。"
+    },
+    "细辛": {
+      nature: "辛，温",
+      meridian: "归心、肺、肾经",
+      effects: "解表散寒，祛风止痛，通窍，温肺化饮",
+      usage: "1～3g；散剂每次服0.5～1g。",
+      caution: "不宜与藜芦同用；阴虚阳亢、肺燥干咳者慎用；用量不宜过大。",
+      pairs: "细辛-麻黄（温肺化饮）、细辛-附子（助阳散寒）、细辛-白芷（通窍止痛）。"
+    },
+    "藁本": {
+      nature: "辛，温",
+      meridian: "归膀胱经",
+      effects: "祛风散寒，除湿止痛",
+      usage: "3～10g。",
+      caution: "血虚头痛、阴虚火旺者慎用。",
+      pairs: "藁本-羌活（散寒祛湿止痛）、藁本-白芷（治头痛）。"
+    },
+    "生姜": {
+      nature: "辛，微温",
+      meridian: "归肺、脾、胃经",
+      effects: "解表散寒，温中止呕，化痰止咳，解鱼蟹毒",
+      usage: "3～10g。",
+      caution: "阴虚内热、血热妄行者忌用。",
+      pairs: "生姜-大枣（调和营卫）、生姜-半夏（温中止呕）。"
+    },
+    "葱白": {
+      nature: "辛，温",
+      meridian: "归肺、胃经",
+      effects: "发汗解表，散寒通阳",
+      usage: "3～10g。",
+      caution: "表虚多汗者慎用。",
+      pairs: "葱白-淡豆豉（通阳发汗）。"
+    },
+    "白芍": {
+      nature: "苦、酸，微寒",
+      meridian: "归肝、脾经",
+      effects: "养血调经，敛阴止汗，柔肝止痛，平抑肝阳",
+      usage: "6～15g。",
+      caution: "不宜与藜芦同用；虚寒腹痛泄泻者慎用。",
+      pairs: "白芍-桂枝（调和营卫）、白芍-甘草（缓急止痛）。"
+    },
+    "大枣": {
+      nature: "甘，温",
+      meridian: "归脾、胃、心经",
+      effects: "补中益气，养血安神",
+      usage: "6～15g。",
+      caution: "湿盛脘腹胀满、食积、虫积、龋齿作痛、痰热咳嗽者慎用。",
+      pairs: "大枣-生姜（调和营卫）。"
+    },
+    "独活": {
+      nature: "辛、苦，微温",
+      meridian: "归肾、膀胱经",
+      effects: "祛风除湿，通痹止痛",
+      usage: "3～10g。",
+      caution: "阴虚血燥者慎用。",
+      pairs: "独活-羌活（上下分治）。"
+    },
+    "苍术": {
+      nature: "辛、苦，温",
+      meridian: "归脾、胃、肝经",
+      effects: "燥湿健脾，祛风散寒，明目",
+      usage: "3～9g。",
+      caution: "阴虚内热、气虚多汗者慎用。",
+      pairs: "苍术-羌活（祛风胜湿）、苍术-厚朴（燥湿行气）。"
+    },
+    "薄荷": {
+      nature: "辛，凉",
+      meridian: "归肺、肝经",
+      effects: "疏散风热，清利头目，利咽，透疹，疏肝行气",
+      usage: "3～6g，后下。",
+      caution: "体虚多汗者慎用；不宜久煎。",
+      pairs: "薄荷-牛蒡子（疏风利咽）、薄荷-蝉蜕（透疹止痒）。"
+    },
+    "牛蒡子": {
+      nature: "辛、苦，寒",
+      meridian: "归肺、胃经",
+      effects: "疏散风热，宣肺透疹，解毒利咽",
+      usage: "6～12g。",
+      caution: "性寒滑肠，气虚便溏者慎用。",
+      pairs: "牛蒡子-薄荷（疏风利咽）、牛蒡子-连翘（清热解毒）。"
+    },
+    "桑叶": {
+      nature: "甘、苦，寒",
+      meridian: "归肺、肝经",
+      effects: "疏散风热，清肺润燥，清肝明目",
+      usage: "5～10g。",
+      caution: "风寒咳嗽者慎用。",
+      pairs: "桑叶-菊花（疏风清热）、桑叶-杏仁（清肺止咳）。"
+    },
+    "菊花": {
+      nature: "甘、苦，微寒",
+      meridian: "归肺、肝经",
+      effects: "疏散风热，平抑肝阳，清肝明目，清热解毒",
+      usage: "5～10g。",
+      caution: "气虚胃寒、食少泄泻者慎用。",
+      pairs: "菊花-桑叶（疏风清热）、菊花-枸杞子（清肝明目）。"
+    },
+    "柴胡": {
+      nature: "辛、苦，微寒",
+      meridian: "归肝、胆、肺经",
+      effects: "疏散退热，疏肝解郁，升举阳气",
+      usage: "3～10g。解表退热宜生用，疏肝解郁宜醋炙。",
+      caution: "肝阳上亢、阴虚火旺者慎用。",
+      pairs: "柴胡-黄芩（和解少阳）、柴胡-葛根（解肌退热）。"
+    },
+    "葛根": {
+      nature: "甘、辛，凉",
+      meridian: "归脾、胃、肺经",
+      effects: "解肌退热，生津止渴，透疹，升阳止泻，通经活络，解酒毒",
+      usage: "10～15g。",
+      caution: "虚寒者慎用；胃寒呕吐者不宜多用。",
+      pairs: "葛根-柴胡（解肌退热）、葛根-升麻（透疹）。"
+    },
+    "升麻": {
+      nature: "辛、微甘，微寒",
+      meridian: "归肺、脾、胃、大肠经",
+      effects: "发表透疹，清热解毒，升举阳气",
+      usage: "3～10g。",
+      caution: "阴虚火旺者慎用；麻疹已透者不宜用。",
+      pairs: "升麻-葛根（透疹解肌）。"
+    },
+    "蝉蜕": {
+      nature: "甘，寒",
+      meridian: "归肺、肝经",
+      effects: "疏散风热，利咽，透疹，明目退翳，解痉",
+      usage: "3～6g。",
+      caution: "孕妇慎用。",
+      pairs: "蝉蜕-薄荷（疏风透疹）、蝉蜕-荆芥（祛风止痒）。"
+    },
+    "浮萍": {
+      nature: "辛，寒",
+      meridian: "归肺经",
+      effects: "宣散风热，透疹，利尿",
+      usage: "3～9g。",
+      caution: "表虚自汗者慎用。",
+      pairs: "浮萍-麻黄（宣肺利水）、浮萍-蝉蜕（透疹止痒）。"
+    },
+    "木贼": {
+      nature: "甘、苦，平",
+      meridian: "归肺、肝经",
+      effects: "疏散风热，明目退翳",
+      usage: "3～9g。",
+      caution: "气血虚者慎用。",
+      pairs: "木贼-蝉蜕（明目退翳）。"
+    },
+    "石膏": {
+      nature: "甘、辛，大寒",
+      meridian: "归肺、胃经",
+      effects: "清热泻火，除烦止渴",
+      usage: "15～60g，先煎。",
+      caution: "脾胃虚寒、阴虚内热者慎用。",
+      pairs: "石膏-麻黄（清肺平喘）、石膏-知母（清热泻火）。"
+    },
+    "黄芩": {
+      nature: "苦，寒",
+      meridian: "归肺、胆、脾、大肠、小肠经",
+      effects: "清热燥湿，泻火解毒，止血，安胎",
+      usage: "3～10g。",
+      caution: "脾胃虚寒者慎用。",
+      pairs: "黄芩-柴胡（和解少阳）、黄芩-黄连（清热燥湿）。"
+    },
+    "香薷": {
+      nature: "辛，微温",
+      meridian: "归肺、胃经",
+      effects: "发汗解表，化湿和中，利水消肿",
+      usage: "3～10g。",
+      caution: "表虚有汗者忌用；暑热证不宜用。",
+      pairs: "香薷-厚朴（化湿和中）、香薷-藿香（解暑化湿）。"
+    },
+    "藿香": {
+      nature: "辛，微温",
+      meridian: "归脾、胃、肺经",
+      effects: "芳香化浊，和中止呕，发表解暑",
+      usage: "3～10g。",
+      caution: "阴虚火旺者慎用。",
+      pairs: "藿香-佩兰（化湿解暑）、藿香-半夏（和中止呕）。"
+    },
+    "佩兰": {
+      nature: "辛，平",
+      meridian: "归脾、胃、肺经",
+      effects: "芳香化湿，醒脾开胃，发表解暑",
+      usage: "3～10g。",
+      caution: "阴虚血燥者慎用。",
+      pairs: "佩兰-藿香（化湿解暑）。"
+    },
+    "辛夷": {
+      nature: "辛，温",
+      meridian: "归肺、胃经",
+      effects: "散风寒，通鼻窍",
+      usage: "3～10g，包煎。",
+      caution: "阴虚火旺者慎用；有毛，刺激咽喉，需包煎。",
+      pairs: "辛夷-苍耳子（通鼻窍）、辛夷-白芷（散寒止痛）。"
+    },
+    "苍耳子": {
+      nature: "辛、苦，温；有毒",
+      meridian: "归肺经",
+      effects: "散风寒，通鼻窍，祛风湿，止痛",
+      usage: "3～10g。",
+      caution: "有毒，不宜过量；血虚头痛者不宜用。",
+      pairs: "苍耳子-辛夷（通鼻窍）、苍耳子-白芷（散寒止痛）。"
+    },
+    "金银花": {
+      nature: "甘，寒",
+      meridian: "归肺、心、胃经",
+      effects: "清热解毒，疏散风热",
+      usage: "6～15g。",
+      caution: "脾胃虚寒者慎用。",
+      pairs: "金银花-连翘（清热解毒）。"
+    },
+    "连翘": {
+      nature: "苦，微寒",
+      meridian: "归肺、心、小肠经",
+      effects: "清热解毒，消肿散结，疏散风热",
+      usage: "6～15g。",
+      caution: "脾胃虚寒者慎用。",
+      pairs: "连翘-金银花（清热解毒）、连翘-牛蒡子（利咽消肿）。"
+    },
+    "附子": {
+      nature: "辛、甘，大热；有毒",
+      meridian: "归心、肾、脾经",
+      effects: "回阳救逆，补火助阳，散寒止痛",
+      usage: "3～15g，先煎0.5～1小时。",
+      caution: "孕妇慎用；不宜与半夏、瓜蒌、贝母、白蔹、白及同用。",
+      pairs: "附子-麻黄（助阳解表）、附子-干姜（回阳救逆）。"
+    },
+    "黄芪": {
+      nature: "甘，微温",
+      meridian: "归肺、脾经",
+      effects: "补气升阳，固表止汗，利水消肿，生津养血，行滞通痹，托毒排脓，敛疮生肌",
+      usage: "9～30g。",
+      caution: "表实邪盛、气滞湿阻、食积内停、阴虚阳亢、疮疡初起或溃后热毒尚盛者慎用。",
+      pairs: "黄芪-防风（益气固表）、黄芪-白术（健脾益气）。"
+    },
+    "紫苏叶": {
+      nature: "辛，温",
+      meridian: "归肺、脾经",
+      effects: "解表散寒，行气和胃",
+      usage: "5～10g。",
+      caution: "气虚、阴虚及温病患者慎用。",
+      pairs: "紫苏叶-生姜（解表散寒）、紫苏叶-香附（行气解郁）。"
+    }
+  },
+  formulas: {
+    "麻黄汤": {
+      composition: "麻黄、桂枝、杏仁、甘草",
+      dose: "麻黄9g，桂枝6g，杏仁9g，甘草3g",
+      function: "发汗解表，宣肺平喘",
+      indication: "外感风寒表实证。恶寒发热，无汗而喘，脉浮紧。",
+      note: "麻黄为君，桂枝为臣，杏仁为佐，甘草为使。"
+    },
+    "荆防败毒散": {
+      composition: "荆芥、防风、羌活、独活、柴胡、前胡、川芎、枳壳、茯苓、桔梗、甘草",
+      dose: "参考《摄生众妙方》",
+      function: "发汗解表，散风祛湿",
+      indication: "外感风寒湿邪表证；疮疡初起兼表证。",
+      note: "荆芥、防风为君，辛温发散；羌活、独活祛风胜湿。"
+    },
+    "九味羌活汤": {
+      composition: "羌活、防风、苍术、细辛、川芎、白芷、生地、黄芩、甘草",
+      dose: "参考《此事难知》",
+      function: "发汗祛湿，兼清里热",
+      indication: "外感风寒湿邪，内有蕴热证。",
+      note: "羌活为君；黄芩、生地清里热，体现表里同治。"
+    },
+    "葱豉汤": {
+      composition: "葱白、淡豆豉",
+      dose: "参考《肘后备急方》",
+      function: "通阳发汗",
+      indication: "外感风寒轻证。",
+      note: "药简力轻，适用于表证初起。"
+    },
+    "桂枝汤": {
+      composition: "桂枝、白芍、生姜、大枣、甘草",
+      dose: "桂枝9g，白芍9g，生姜9g，大枣3枚，甘草6g",
+      function: "解肌发表，调和营卫",
+      indication: "外感风寒表虚证。头痛发热，汗出恶风，脉浮缓。",
+      note: "桂枝与白芍相配，散中有收，调和营卫。"
+    },
+    "桂枝加葛根汤": {
+      composition: "桂枝汤加葛根",
+      dose: "参考《伤寒论》",
+      function: "解肌发表，升津舒筋",
+      indication: "风寒表虚兼项背强几几。",
+      note: "葛根升津舒筋，解肌退热。"
+    },
+    "羌活胜湿汤": {
+      composition: "羌活、独活、藁本、防风、甘草、蔓荆子、川芎",
+      dose: "参考《内外伤辨惑论》",
+      function: "祛风，胜湿，止痛",
+      indication: "风湿在表，头身重痛。",
+      note: "羌活、独活上下分治，藁本、蔓荆子善治头痛。"
+    },
+    "银翘散": {
+      composition: "金银花、连翘、薄荷、荆芥穗、淡豆豉、牛蒡子、桔梗、甘草、竹叶、芦根",
+      dose: "参考《温病条辨》",
+      function: "辛凉透表，清热解毒",
+      indication: "温病初起。发热无汗或有汗不畅，咽喉肿痛，口渴，脉浮数。",
+      note: "金银花、连翘为君，辛凉中佐以荆芥、豆豉透表。"
+    },
+    "桑菊饮": {
+      composition: "桑叶、菊花、杏仁、连翘、薄荷、桔梗、甘草、芦根",
+      dose: "参考《温病条辨》",
+      function: "疏风清热，宣肺止咳",
+      indication: "风温初起，表热轻证。咳嗽，身热不甚，口微渴。",
+      note: "桑叶、菊花为君，杏仁、桔梗宣肺止咳。"
+    },
+    "柴葛解肌汤": {
+      composition: "柴胡、葛根、甘草、黄芩、白芍、羌活、白芷、桔梗、石膏、生姜、大枣",
+      dose: "参考《伤寒六书》",
+      function: "解肌清热",
+      indication: "外感风寒，郁而化热证。恶寒渐轻，身热增盛，头痛肢楚，目痛鼻干，心烦不眠。",
+      note: "柴胡、葛根解肌退热；石膏、黄芩清里热。"
+    },
+    "麻杏石甘汤": {
+      composition: "麻黄、杏仁、石膏、甘草",
+      dose: "参考《伤寒论》",
+      function: "辛凉宣泄，清肺平喘",
+      indication: "外感风邪，邪热壅肺证。身热不解，咳逆气急，鼻扇，口渴，脉浮数。",
+      note: "麻黄配石膏，宣肺而不助热，清肺而不留邪。"
+    },
+    "越婢汤": {
+      composition: "麻黄、石膏、生姜、大枣、甘草",
+      dose: "参考《金匮要略》",
+      function: "发汗利水",
+      indication: "风水恶风，一身悉肿，脉浮不渴，续自汗出，无大热。",
+      note: "麻黄宣肺利水，石膏清里热。"
+    },
+    "甘草麻黄汤": {
+      composition: "甘草、麻黄",
+      dose: "参考《金匮要略》",
+      function: "宣肺利水",
+      indication: "里水，一身面目黄肿，脉沉，小便不利。",
+      note: "麻黄宣肺通调水道，甘草和中。"
+    },
+    "香薷散": {
+      composition: "香薷、厚朴、白扁豆",
+      dose: "参考《太平惠民和剂局方》",
+      function: "祛暑解表，化湿和中",
+      indication: "阴暑证。恶寒发热，无汗，头重身痛，胸闷脘痞，腹痛吐泻。",
+      note: "香薷为君，解表化湿；厚朴、扁豆和中。"
+    },
+    "升麻葛根汤": {
+      composition: "升麻、葛根、白芍、甘草",
+      dose: "参考《阎氏小儿方论》",
+      function: "解肌透疹",
+      indication: "麻疹初起，疹出不透。",
+      note: "升麻、葛根透疹解肌，白芍、甘草和营。"
+    },
+    "消风散": {
+      composition: "荆芥、防风、牛蒡子、蝉蜕、苍术、苦参、木通、石膏、知母、当归、生地、胡麻、甘草",
+      dose: "参考《外科正宗》",
+      function: "疏风养血，清热除湿",
+      indication: "风疹、湿疹。皮肤瘙痒，疹色红，或遍身云片斑点。",
+      note: "荆芥、防风、牛蒡子、蝉蜕疏风止痒；当归、生地养血。"
+    },
+    "苍耳子散": {
+      composition: "苍耳子、辛夷、白芷、薄荷",
+      dose: "参考《济生方》",
+      function: "散风寒，通鼻窍",
+      indication: "鼻渊。鼻塞，流涕，前额头痛。",
+      note: "苍耳子、辛夷通鼻窍；白芷、薄荷疏风止痛。"
+    },
+    "辛夷散": {
+      composition: "辛夷、细辛、白芷、防风、羌活、藁本、升麻、川芎、木通、甘草",
+      dose: "参考《严氏济生方》",
+      function: "散风寒，通鼻窍",
+      indication: "鼻渊、鼻塞，不闻香臭。",
+      note: "辛夷、细辛、白芷通窍；羌活、藁本散风寒。"
+    },
+    "仙方活命饮": {
+      composition: "金银花、白芷、贝母、防风、赤芍、当归、乳香、没药、穿山甲、皂角刺、天花粉、甘草、陈皮",
+      dose: "参考《校注妇人良方》",
+      function: "清热解毒，消肿溃坚，活血止痛",
+      indication: "疮疡肿毒初起，红肿热痛。",
+      note: "金银花清热解毒为君；白芷、防风透表。"
+    },
+    "麻黄附子细辛汤": {
+      composition: "麻黄、附子、细辛",
+      dose: "参考《伤寒论》",
+      function: "助阳解表",
+      indication: "阳虚外感。恶寒重，发热轻，无汗，神疲欲寐，脉沉微。",
+      note: "麻黄解表，附子助阳，细辛温经，表里同治。"
+    },
+    "桂枝加附子汤": {
+      composition: "桂枝汤加附子",
+      dose: "参考《伤寒论》",
+      function: "扶阳固表",
+      indication: "阳虚漏汗，恶风，小便难，四肢微急。",
+      note: "附子助阳固表，桂枝汤调和营卫。"
+    },
+    "参苏饮": {
+      composition: "人参、紫苏叶、葛根、半夏、前胡、茯苓、陈皮、甘草、桔梗、枳壳、木香、生姜、大枣",
+      dose: "参考《太平惠民和剂局方》",
+      function: "益气解表，理气化痰",
+      indication: "气虚外感风寒，内有痰湿。恶寒发热，无汗，头痛，咳嗽痰白，胸脘满闷，倦怠乏力。",
+      note: "人参益气，紫苏叶、葛根解表，二陈汤化痰。"
+    },
+    "玉屏风散": {
+      composition: "黄芪、白术、防风",
+      dose: "参考《医方类聚》",
+      function: "益气固表止汗",
+      indication: "表虚自汗，易感风邪。",
+      note: "黄芪益气固表为君，白术健脾，防风走表御风。"
+    }
+  },
+  syndromes: [
+    {
+      id: "fenghan-shishi",
+      name: "风寒表实证",
+      category: "风寒表证",
+      symptoms: "恶寒重，发热轻，无汗，头身疼痛，鼻塞流清涕，脉浮紧。",
+      pathogenesis: "风寒束表，卫阳被遏，营阴郁滞，肺气不宣。",
+      method: "发汗解表，宣肺平喘。",
+      note: "辨证要点：无汗、脉浮紧；与表虚证以有汗/无汗、脉浮紧/浮缓相鉴别。",
+      herbs: [
+        { name: "麻黄", role: "首选" },
+        { name: "桂枝", role: "常用" },
+        { name: "荆芥", role: "常用" },
+        { name: "防风", role: "常用" },
+        { name: "羌活", role: "常用" },
+        { name: "白芷", role: "常用" },
+        { name: "细辛", role: "常用" },
+        { name: "藁本", role: "常用" },
+        { name: "生姜", role: "常用" },
+        { name: "葱白", role: "常用" }
+      ],
+      formulas: ["麻黄汤", "荆防败毒散", "九味羌活汤", "葱豉汤"]
+    },
+    {
+      id: "fenghan-biaoxu",
+      name: "风寒表虚证",
+      category: "风寒表证",
+      symptoms: "头痛发热，汗出恶风，鼻鸣干呕，脉浮缓。",
+      pathogenesis: "风寒袭表，营卫不和，腠理不固。",
+      method: "解肌发表，调和营卫。",
+      note: "辨证要点：汗出恶风、脉浮缓；桂枝与白芍相配，散中有收。",
+      herbs: [
+        { name: "桂枝", role: "首选" },
+        { name: "白芍", role: "配伍" },
+        { name: "生姜", role: "常用" },
+        { name: "大枣", role: "配伍" },
+        { name: "荆芥", role: "常用" },
+        { name: "防风", role: "常用" }
+      ],
+      formulas: ["桂枝汤", "桂枝加葛根汤"]
+    },
+    {
+      id: "fenghan-jiashi",
+      name: "风寒夹湿证",
+      category: "风寒表证",
+      symptoms: "恶寒发热，头身重痛，肢体酸楚，苔白腻，脉浮濡。",
+      pathogenesis: "风寒湿邪束表，经络气血不畅。",
+      method: "发汗解表，散寒祛湿。",
+      note: "辨证要点：头身重痛、苔白腻；羌活、独活上下分治。",
+      herbs: [
+        { name: "羌活", role: "首选" },
+        { name: "独活", role: "常用" },
+        { name: "藁本", role: "常用" },
+        { name: "防风", role: "常用" },
+        { name: "白芷", role: "常用" },
+        { name: "苍术", role: "配伍" }
+      ],
+      formulas: ["九味羌活汤", "羌活胜湿汤"]
+    },
+    {
+      id: "fengre-biaozheng",
+      name: "风热表证",
+      category: "风热表证",
+      symptoms: "发热重，微恶风寒，咽痛，口渴，涕黄稠，脉浮数。",
+      pathogenesis: "风热犯表，卫表不和，热邪伤津。",
+      method: "辛凉解表，疏风清热。",
+      note: "辨证要点：发热重、咽痛、脉浮数；辛凉解表，不宜过用辛温发汗。",
+      herbs: [
+        { name: "薄荷", role: "首选" },
+        { name: "牛蒡子", role: "常用" },
+        { name: "桑叶", role: "常用" },
+        { name: "菊花", role: "常用" },
+        { name: "柴胡", role: "常用" },
+        { name: "葛根", role: "常用" },
+        { name: "升麻", role: "常用" },
+        { name: "蝉蜕", role: "常用" },
+        { name: "浮萍", role: "常用" },
+        { name: "木贼", role: "常用" }
+      ],
+      formulas: ["银翘散", "桑菊饮", "柴葛解肌汤"]
+    },
+    {
+      id: "biao-han-li-re",
+      name: "表寒里热证",
+      category: "兼夹证",
+      symptoms: "恶寒发热，无汗，头痛，肢体酸痛，心烦口渴，咳喘气急，脉浮紧而数。",
+      pathogenesis: "外感风寒，内有郁热；或寒邪束表，肺热壅盛。",
+      method: "解表清里，宣肺泄热。",
+      note: "辨证要点：恶寒无汗兼心烦口渴、咳喘；解表与清里并行。",
+      herbs: [
+        { name: "麻黄", role: "首选" },
+        { name: "桂枝", role: "常用" },
+        { name: "荆芥", role: "常用" },
+        { name: "防风", role: "常用" },
+        { name: "柴胡", role: "常用" },
+        { name: "葛根", role: "常用" },
+        { name: "石膏", role: "配伍" },
+        { name: "黄芩", role: "配伍" }
+      ],
+      formulas: ["麻杏石甘汤", "九味羌活汤", "柴葛解肌汤"]
+    },
+    {
+      id: "fengshui",
+      name: "风水证",
+      category: "兼夹证",
+      symptoms: "眼睑浮肿，继则四肢全身浮肿，恶风发热，小便不利，脉浮。",
+      pathogenesis: "风邪袭表，肺失通调，水湿泛溢。",
+      method: "宣肺解表，利水消肿。",
+      note: "辨证要点：水肿兼表证、脉浮；宣肺以通调水道。",
+      herbs: [
+        { name: "麻黄", role: "首选" },
+        { name: "浮萍", role: "常用" },
+        { name: "香薷", role: "常用" }
+      ],
+      formulas: ["越婢汤", "甘草麻黄汤"]
+    },
+    {
+      id: "biao-zheng-jia-shu",
+      name: "表证夹暑（阴暑）",
+      category: "兼夹证",
+      symptoms: "恶寒发热，无汗，头重身痛，胸闷脘痞，腹痛吐泻，苔白腻。",
+      pathogenesis: "夏月感寒，暑湿内蕴，脾胃失和。",
+      method: "发汗解表，化湿和中。",
+      note: "辨证要点：夏月感寒、无汗、胸闷吐泻；香薷为“夏月麻黄”。",
+      herbs: [
+        { name: "香薷", role: "首选" },
+        { name: "藿香", role: "配伍" },
+        { name: "佩兰", role: "配伍" }
+      ],
+      formulas: ["香薷散"]
+    },
+    {
+      id: "mazhen-fengzhen",
+      name: "麻疹不透 / 风疹瘙痒",
+      category: "其他",
+      symptoms: "麻疹初起，疹出不透，或风疹瘙痒，发热恶风。",
+      pathogenesis: "风邪外束，疹毒不透，或风热郁于肌表。",
+      method: "发表透疹，疏风止痒。",
+      note: "辨证要点：疹出不透或瘙痒；透疹药多轻清，不宜大汗。",
+      herbs: [
+        { name: "荆芥", role: "常用" },
+        { name: "薄荷", role: "首选" },
+        { name: "蝉蜕", role: "常用" },
+        { name: "升麻", role: "常用" },
+        { name: "葛根", role: "常用" },
+        { name: "浮萍", role: "常用" },
+        { name: "牛蒡子", role: "常用" }
+      ],
+      formulas: ["升麻葛根汤", "消风散"]
+    },
+    {
+      id: "biyuan",
+      name: "鼻渊 / 鼻塞",
+      category: "其他",
+      symptoms: "鼻塞，流涕，前额头痛，不闻香臭。",
+      pathogenesis: "风寒或风热犯肺，鼻窍不通。",
+      method: "散风寒，通鼻窍。",
+      note: "辨证要点：鼻塞、流涕、前额痛；辛夷、苍耳子通鼻窍。",
+      herbs: [
+        { name: "辛夷", role: "首选" },
+        { name: "苍耳子", role: "首选" },
+        { name: "白芷", role: "常用" },
+        { name: "细辛", role: "常用" }
+      ],
+      formulas: ["苍耳子散", "辛夷散"]
+    },
+    {
+      id: "chuangyang-chuqi",
+      name: "疮疡初起兼表证",
+      category: "其他",
+      symptoms: "疮疡初起，红肿热痛，恶寒发热，脉浮。",
+      pathogenesis: "外感风邪，营卫不和，邪毒郁于肌表。",
+      method: "疏风解表，消肿散结。",
+      note: "辨证要点：疮疡初起兼恶寒发热；解表以散邪，解毒以消肿。",
+      herbs: [
+        { name: "荆芥", role: "常用" },
+        { name: "防风", role: "常用" },
+        { name: "白芷", role: "常用" },
+        { name: "金银花", role: "配伍" },
+        { name: "连翘", role: "配伍" }
+      ],
+      formulas: ["荆防败毒散", "仙方活命饮"]
+    },
+    {
+      id: "yangxu-waigan",
+      name: "阳虚外感",
+      category: "虚人外感",
+      symptoms: "恶寒重，发热轻，无汗，神疲欲寐，脉沉微。",
+      pathogenesis: "阳气不足，外感风寒，正虚邪恋。",
+      method: "助阳解表。",
+      note: "辨证要点：恶寒重、脉沉微；麻黄配附子，助阳解表。",
+      herbs: [
+        { name: "麻黄", role: "首选" },
+        { name: "细辛", role: "常用" },
+        { name: "桂枝", role: "常用" },
+        { name: "附子", role: "配伍" }
+      ],
+      formulas: ["麻黄附子细辛汤", "桂枝加附子汤"]
+    },
+    {
+      id: "qixu-waigan",
+      name: "气虚外感",
+      category: "虚人外感",
+      symptoms: "恶寒发热，自汗，倦怠乏力，气短，脉浮无力。",
+      pathogenesis: "气虚卫外不固，外感风寒。",
+      method: "益气解表。",
+      note: "辨证要点：自汗、倦怠、脉浮无力；益气解表，不宜单纯发汗。",
+      herbs: [
+        { name: "黄芪", role: "配伍" },
+        { name: "桂枝", role: "常用" },
+        { name: "荆芥", role: "常用" },
+        { name: "防风", role: "常用" },
+        { name: "紫苏叶", role: "常用" }
+      ],
+      formulas: ["参苏饮", "玉屏风散"]
+    }
+  ]
+};
+
+const GROUP_ORDER = KG.groups;
+const state = { currentId: null, query: "" };
+
+const $ = (selector, root = document) => root.querySelector(selector);
+const $$ = (selector, root = document) => Array.from(root.querySelectorAll(selector));
+const esc = (value) => String(value).replace(/[&<>"']/g, (char) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[char]));
+
+const allHerbNames = new Set();
+const allFormulaNames = new Set();
+KG.syndromes.forEach((syndrome) => {
+  syndrome.herbs.forEach((herb) => allHerbNames.add(herb.name));
+  syndrome.formulas.forEach((formula) => allFormulaNames.add(formula));
+});
+
+function roleClass(role) {
+  if (role === "首选") return "role-main";
+  if (role === "常用") return "role-common";
+  return "role-assist";
+}
+
+function matchesQuery(syndrome) {
+  const query = state.query;
+  if (!query) return true;
+  return [
+    syndrome.name,
+    syndrome.category,
+    syndrome.symptoms,
+    syndrome.pathogenesis,
+    syndrome.method,
+    syndrome.note,
+    ...syndrome.herbs.map((herb) => herb.name),
+    ...syndrome.herbs.map((herb) => KG.herbs[herb.name] ? KG.herbs[herb.name].effects : ""),
+    ...syndrome.formulas
+  ].join(" ").includes(query);
+}
+
+function renderStats() {
+  $("#stats").innerHTML = [
+    `<span class="stat"><b>${KG.syndromes.length}</b>证类</span>`,
+    `<span class="stat"><b>${allHerbNames.size}</b>味药</span>`,
+    `<span class="stat"><b>${allFormulaNames.size}</b>首方</span>`
+  ].join("");
+}
+
+function renderNav() {
+  const nav = $("#syndromeNav");
+  let html = `<button class="nav-item ${state.currentId === null ? "active" : ""}" data-nav="all">
+    <span>谱系总览</span><span class="nav-count">${KG.syndromes.length}</span>
+  </button>`;
+
+  GROUP_ORDER.forEach((group) => {
+    const syndromes = KG.syndromes.filter((syndrome) => syndrome.category === group && matchesQuery(syndrome));
+    if (!syndromes.length) return;
+    html += `<div class="nav-group"><div class="nav-group-title">${esc(group)}</div>`;
+    syndromes.forEach((syndrome) => {
+      html += `<button class="nav-item ${state.currentId === syndrome.id ? "active" : ""}" data-nav="${syndrome.id}">
+        <span>${esc(syndrome.name)}</span><span class="nav-count">${syndrome.herbs.length}</span>
+      </button>`;
+    });
+    html += `</div>`;
+  });
+
+  if (!html.includes("data-nav=\"") || (state.query && !KG.syndromes.some(matchesQuery))) {
+    html += `<div class="nav-empty">没有匹配的证候。试试“风寒”“咽痛”“麻黄”或“鼻塞”。</div>`;
+  }
+  nav.innerHTML = html;
+}
+
+function cardHTML(syndrome) {
+  const herbs = syndrome.herbs.slice(0, 4).map((herb) => `<span class="herb-chip">${esc(herb.name)}</span>`).join("");
+  const more = syndrome.herbs.length > 4 ? `<span class="herb-chip more">+${syndrome.herbs.length - 4}</span>` : "";
+  return `<article class="syndrome-card" data-open="${syndrome.id}" tabindex="0" role="button" aria-label="查看${esc(syndrome.name)}的理法方药链">
+    <div class="card-top">
+      <span class="tag ${syndrome.category === "风热表证" ? "jade" : syndrome.category === "虚人外感" ? "gold" : ""}">${esc(syndrome.category)}</span>
+      <span class="card-arrow">→</span>
+    </div>
+    <h4>${esc(syndrome.name)}</h4>
+    <p class="card-symptoms">${esc(syndrome.symptoms)}</p>
+    <div class="card-method"><span>治法</span>${esc(syndrome.method)}</div>
+    <div class="card-herbs">${herbs}${more}</div>
+    <div class="card-foot"><span>${syndrome.herbs.length} 味药</span><span class="ext">${syndrome.formulas.length} 首方 · 拓展</span></div>
+  </article>`;
+}
+
+function renderOverview() {
+  $("#crumbName").textContent = "谱系总览";
+  const syndromes = KG.syndromes.filter(matchesQuery);
+  const cards = syndromes.length
+    ? syndromes.map(cardHTML).join("")
+    : `<div class="empty-state">没有匹配的证候。试试“风寒”“咽痛”“麻黄”或“鼻塞”。</div>`;
+
+  $("#view").innerHTML = `
+    <section class="hero">
+      <div class="eyebrow">中药学 · 以证统药</div>
+      <h2>表证：从证候到中药</h2>
+      <p class="hero-lead">先辨表证，再明病机与治法，落到具体中药。方剂放在药物之后，作为配伍拓展，不要求先学方剂学。</p>
+      <div class="hero-stats">
+        <div class="hero-stat"><b>${KG.syndromes.length}</b><span>表证证类</span></div>
+        <div class="hero-stat"><b>${allHerbNames.size}</b><span>涉及中药</span></div>
+        <div class="hero-stat"><b>${allFormulaNames.size}</b><span>拓展方剂</span></div>
+      </div>
+      <button class="hero-action" data-open="fenghan-shishi">从风寒表实证看麻黄 <span>→</span></button>
+    </section>
+
+    <div class="flow-strip" aria-label="知识图谱阅读顺序">
+      <span class="flow-strip-label">阅读顺序</span>
+      <span class="flow-pill accent">表证</span><span class="flow-arrow">→</span>
+      <span class="flow-pill">证类</span><span class="flow-arrow">→</span>
+      <span class="flow-pill">理 · 病机</span><span class="flow-arrow">→</span>
+      <span class="flow-pill">法 · 治法</span><span class="flow-arrow">→</span>
+      <span class="flow-pill accent">药 · 中药</span><span class="flow-arrow dashed">⇢</span>
+      <span class="flow-pill muted">方 · 拓展</span>
+    </div>
+
+    <div class="section-head">
+      <h3>表证分型</h3>
+      <p>${state.query ? `匹配 ${syndromes.length} 个证类` : "点击任一证类，进入理法方药链"}</p>
+    </div>
+    <div class="grid">${cards}</div>
+  `;
+}
+
+function openHerb(name) {
+  const herb = KG.herbs[name];
+  if (!herb) return;
+  const appearances = [];
+  KG.syndromes.forEach((syndrome) => {
+    syndrome.herbs.forEach((item) => {
+      if (item.name === name) appearances.push({ syndrome: syndrome.name, role: item.role });
+    });
+  });
+  const formulas = Object.keys(KG.formulas).filter((formulaName) => KG.formulas[formulaName].composition.includes(name));
+
+  $("#drawerContent").innerHTML = `
+    <div class="drawer-head">
+      <div>
+        <div class="drawer-kicker">中药 · 药性</div>
+        <h3>${esc(name)}</h3>
+      </div>
+      <button class="close-btn" data-close aria-label="关闭">×</button>
+    </div>
+    <div class="drawer-body">
+      <div class="field"><div class="field-label">性味</div><div class="field-value serif">${esc(herb.nature)}</div></div>
+      <div class="field"><div class="field-label">归经</div><div class="field-value serif">${esc(herb.meridian)}</div></div>
+      <div class="field"><div class="field-label">功效</div><div class="field-value">${esc(herb.effects)}</div></div>
+      <div class="field"><div class="field-label">用量用法</div><div class="field-value">${esc(herb.usage)}</div></div>
+      <div class="field"><div class="field-label">使用注意</div><div class="field-value">${esc(herb.caution)}</div></div>
+      <div class="field"><div class="field-label">常见药对</div><div class="field-value">${esc(herb.pairs)}</div></div>
+      <div class="field">
+        <div class="field-label">在表证中的位置</div>
+        <div class="chip-row">${appearances.map((item) => `<span class="chip cinnabar">${esc(item.syndrome)} · ${esc(item.role)}</span>`).join("")}</div>
+      </div>
+      <div class="field">
+        <div class="field-label">见于方剂（拓展）</div>
+        <div class="chip-row">${formulas.length ? formulas.map((formula) => `<span class="chip gold">${esc(formula)}</span>`).join("") : `<span class="chip">暂无</span>`}</div>
+      </div>
+      <div class="drawer-note">中药学阶段先掌握药性、功效与主治；方剂只作为“这味药在什么方中出现”的拓展线索，不要求掌握全方配伍。</div>
+    </div>
+  `;
+  openDrawer();
+}
+
+function openFormula(name) {
+  const formula = KG.formulas[name];
+  if (!formula) return;
+  const syndromes = KG.syndromes.filter((syndrome) => syndrome.formulas.includes(name));
+  const herbs = Object.keys(KG.herbs).filter((herbName) => formula.composition.includes(herbName));
+
+  $("#drawerContent").innerHTML = `
+    <div class="drawer-head">
+      <div>
+        <div class="drawer-kicker">方剂 · 拓展</div>
+        <h3>${esc(name)}</h3>
+      </div>
+      <button class="close-btn" data-close aria-label="关闭">×</button>
+    </div>
+    <div class="drawer-body">
+      <div class="field"><div class="field-label">组成</div><div class="field-value">${esc(formula.composition)}</div></div>
+      <div class="field"><div class="field-label">参考剂量 / 出处</div><div class="field-value">${esc(formula.dose)}</div></div>
+      <div class="field"><div class="field-label">功用</div><div class="field-value serif">${esc(formula.function)}</div></div>
+      <div class="field"><div class="field-label">主治</div><div class="field-value">${esc(formula.indication)}</div></div>
+      <div class="field"><div class="field-label">方解 / 配伍要点</div><div class="field-value">${esc(formula.note)}</div></div>
+      <div class="field">
+        <div class="field-label">关联证候</div>
+        <div class="chip-row">${syndromes.map((syndrome) => `<span class="chip cinnabar">${esc(syndrome.name)}</span>`).join("")}</div>
+      </div>
+      <div class="field">
+        <div class="field-label">所含中药</div>
+        <div class="chip-row">${herbs.length ? herbs.map((herb) => `<span class="chip">${esc(herb)}</span>`).join("") : `<span class="chip">见组成</span>`}</div>
+      </div>
+      <div class="drawer-note">方剂在本课程中是“药物的配伍语境”：看到药在方中的位置，帮助理解配伍，但不作为先修内容。</div>
+    </div>
+  `;
+  openDrawer();
+}
+
+function openDrawer() {
+  $("#drawer").classList.add("open");
+  $("#drawer").setAttribute("aria-hidden", "false");
+  $("#overlay").classList.add("open");
+  document.body.style.overflow = "hidden";
+}
+
+function closeDrawer() {
+  $("#drawer").classList.remove("open");
+  $("#drawer").setAttribute("aria-hidden", "true");
+  $("#overlay").classList.remove("open");
+  document.body.style.overflow = "";
+}
+
+function renderDetail(id) {
+  const syndrome = KG.syndromes.find((item) => item.id === id);
+  if (!syndrome) { renderOverview(); return; }
+  state.currentId = id;
+  $("#crumbName").textContent = syndrome.name;
+
+  const herbCards = syndrome.herbs.map((item) => {
+    const herb = KG.herbs[item.name];
+    return `<article class="herb-card" data-herb="${esc(item.name)}" tabindex="0" role="button" aria-label="查看${esc(item.name)}的药性">
+      <div class="herb-card-top"><span class="herb-name">${esc(item.name)}</span><span class="role ${roleClass(item.role)}">${esc(item.role)}</span></div>
+      <div class="herb-nature">${esc(herb.nature)} · ${esc(herb.meridian)}</div>
+      <p class="herb-effect">${esc(herb.effects)}</p>
+      <div class="herb-more">查看药性 →</div>
+    </article>`;
+  }).join("");
+
+  const formulaCards = syndrome.formulas.map((name) => {
+    const formula = KG.formulas[name];
+    return `<article class="formula-card" data-formula="${esc(name)}" tabindex="0" role="button" aria-label="查看${esc(name)}的方剂信息">
+      <div class="formula-card-top"><span class="formula-name">${esc(name)}</span><span class="ext-tag">拓展</span></div>
+      <div class="formula-func">${esc(formula.function)}</div>
+      <div class="formula-comp">${esc(formula.composition)}</div>
+    </article>`;
+  }).join("");
+
+  $("#view").innerHTML = `
+    <section class="detail-head" data-mark="${esc(syndrome.name.slice(0, 2))}">
+      <div class="eyebrow">${esc(syndrome.category)} · 表证</div>
+      <h2>${esc(syndrome.name)}</h2>
+      <p class="detail-symptoms">${esc(syndrome.symptoms)}</p>
+      <div class="relation-bar" aria-label="理法方药阅读顺序">
+        <span class="rel root">表证</span><span class="rel-arrow">→</span>
+        <span class="rel">证候</span><span class="rel-arrow">→</span>
+        <span class="rel">理</span><span class="rel-arrow">→</span>
+        <span class="rel">法</span><span class="rel-arrow">→</span>
+        <span class="rel active">药</span><span class="rel-arrow">⇢</span>
+        <span class="rel muted">方 · 拓展</span>
+      </div>
+    </section>
+
+    <div class="timeline">
+      <section class="step">
+        <div class="step-num">1</div>
+        <div class="step-card plain">
+          <div class="step-label">证</div>
+          <h3>辨证要点</h3>
+          <p>${esc(syndrome.symptoms)}</p>
+          <div class="mini-note">${esc(syndrome.note)}</div>
+        </div>
+      </section>
+      <section class="step">
+        <div class="step-num">2</div>
+        <div class="step-card">
+          <div class="step-label">理</div>
+          <h3>病机</h3>
+          <p>${esc(syndrome.pathogenesis)}</p>
+        </div>
+      </section>
+      <section class="step">
+        <div class="step-num">3</div>
+        <div class="step-card">
+          <div class="step-label jade">法</div>
+          <h3>${esc(syndrome.method)}</h3>
+          <p>治法由病机推出，是“证”与“药”之间的桥。</p>
+        </div>
+      </section>
+      <section class="step focus">
+        <div class="step-num">4</div>
+        <div class="step-card">
+          <div class="step-label accent">药 · 本课程重点</div>
+          <h3>${syndrome.herbs.length} 味中药</h3>
+          <p>先看药性、功效与主治，再点开单味药查看用量、注意和药对。</p>
+          <div class="herb-grid">${herbCards}</div>
+        </div>
+      </section>
+      <section class="step">
+        <div class="step-num">5</div>
+        <div class="step-card">
+          <div class="step-label">方 · 拓展层</div>
+          <h3>代表方剂</h3>
+          <div class="extension-note">中药学阶段不要求先学方剂。先掌握药的主治与功效，再用方剂理解配伍。</div>
+          <div class="formula-grid">${formulaCards}</div>
+        </div>
+      </section>
+    </div>
+  `;
+}
+
+function render() {
+  renderNav();
+  if (state.currentId === null) renderOverview();
+  else renderDetail(state.currentId);
+}
+
+document.addEventListener("click", (event) => {
+  const navItem = event.target.closest("[data-nav]");
+  if (navItem) {
+    const id = navItem.getAttribute("data-nav");
+    state.currentId = id === "all" ? null : id;
+    if (id === "all") renderOverview();
+    else renderDetail(id);
+    renderNav();
+    return;
+  }
+
+  const opener = event.target.closest("[data-open]");
+  if (opener) {
+    const id = opener.getAttribute("data-open");
+    state.currentId = id;
+    renderDetail(id);
+    renderNav();
+    return;
+  }
+
+  const herbCard = event.target.closest("[data-herb]");
+  if (herbCard) {
+    openHerb(herbCard.getAttribute("data-herb"));
+    return;
+  }
+
+  const formulaCard = event.target.closest("[data-formula]");
+  if (formulaCard) {
+    openFormula(formulaCard.getAttribute("data-formula"));
+    return;
+  }
+
+  if (event.target.closest("[data-close]")) closeDrawer();
+});
+
+document.addEventListener("keydown", (event) => {
+  if (event.key === "Escape") closeDrawer();
+  if ((event.key === "Enter" || event.key === " ") && event.target.matches(".syndrome-card, .herb-card, .formula-card")) {
+    event.preventDefault();
+    event.target.click();
+  }
+});
+
+$("#searchInput").addEventListener("input", (event) => {
+  state.query = event.target.value.trim();
+  renderNav();
+  if (state.currentId === null) renderOverview();
+});
+
+renderStats();
+render();
+</script>
+</body>
+</html>
