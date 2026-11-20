@@ -1,0 +1,855 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>解表药知识图谱 · 以证统药</title>
+<style>
+  :root{
+    --paper:#fbf6ee;
+    --paper-2:#f6eddf;
+    --ink:#33291f;
+    --ink-2:#5b4c3d;
+    --muted:#8d7d6a;
+    --line:#d9cab5;
+    --cinnabar:#a8392a;
+    --cinnabar-2:#c4654d;
+    --gold:#b8871f;
+    --jade:#4a8577;
+    --serif:"Songti SC","STSong","Noto Serif SC","Source Han Serif SC","SimSun",serif;
+    --sans:"PingFang SC","Hiragino Sans GB","Microsoft YaHei",system-ui,-apple-system,sans-serif;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  body{
+    font-family:var(--sans);
+    color:var(--ink);
+    background:
+      radial-gradient(1100px 640px at 8% -6%, #fffdf8 0%, rgba(255,253,248,0) 62%),
+      radial-gradient(900px 600px at 100% 100%, #f7efe2 0%, rgba(247,239,226,0) 60%),
+      var(--paper);
+    min-height:100vh;
+    display:flex;
+    flex-direction:column;
+  }
+
+  /* ---------- 顶部 ---------- */
+  .top{
+    display:flex;
+    align-items:center;
+    gap:22px;
+    padding:14px 26px;
+    border-bottom:1px solid var(--line);
+    background:linear-gradient(180deg,#fdf9f3,#f9f2e7);
+    flex-wrap:wrap;
+    flex:0 0 auto;
+  }
+  .brand{display:flex;align-items:center;gap:14px;flex:0 0 auto}
+  .seal{
+    width:46px;height:46px;border-radius:7px;
+    background:var(--cinnabar);
+    color:#fff7ea;font-family:var(--serif);
+    font-size:26px;line-height:46px;text-align:center;
+    letter-spacing:0;
+    box-shadow:inset 0 0 0 2px rgba(255,247,234,.28), 0 3px 8px rgba(120,45,30,.22);
+  }
+  .brand-text h1{
+    margin:0;font-family:var(--serif);font-size:21px;letter-spacing:3px;font-weight:600;color:#42301f;
+  }
+  .brand-text p{
+    margin:3px 0 0;font-size:11.5px;letter-spacing:1.5px;color:var(--muted);
+  }
+  .pathbar{
+    flex:1 1 320px;min-width:220px;
+    display:flex;align-items:center;flex-wrap:wrap;gap:5px;
+    font-size:12.5px;
+  }
+  .path-empty{color:var(--muted);letter-spacing:1px;font-size:12px}
+  .crumb{
+    font:inherit;font-size:12.5px;
+    padding:4px 11px;border-radius:999px;
+    border:1px solid var(--line);background:#fffdf9;color:var(--ink-2);
+    cursor:pointer;transition:all .16s ease;
+  }
+  .crumb:hover{border-color:var(--cinnabar-2);color:var(--cinnabar)}
+  .crumb.now{background:var(--cinnabar);border-color:var(--cinnabar);color:#fff8ec}
+  .arrow{color:#b9a88f;font-size:11px;padding:0 1px}
+  .top-actions{display:flex;align-items:center;gap:14px;margin-left:auto}
+  .hint{font-size:11.5px;color:var(--muted);letter-spacing:.5px}
+  .btn{
+    font:inherit;font-size:13px;padding:7px 16px;border-radius:8px;
+    border:1px solid var(--line);background:#fffdf9;color:var(--ink-2);
+    cursor:pointer;transition:all .16s ease;
+  }
+  .btn:hover{border-color:var(--cinnabar);color:var(--cinnabar);background:#fff9f0}
+  .btn:active{transform:translateY(1px)}
+
+  /* ---------- 主体 ---------- */
+  .workspace{flex:1;display:flex;min-height:0}
+  .graph-panel{flex:1;display:flex;flex-direction:column;min-width:0;min-height:560px;position:relative}
+  .graph-wrap{position:relative;flex:1;min-height:480px}
+  #graph{position:absolute;inset:0;width:100%;height:100%;display:block}
+
+  .legend{
+    position:absolute;left:20px;top:16px;z-index:3;
+    display:flex;flex-wrap:wrap;gap:14px;align-items:center;
+    padding:8px 14px;border:1px solid var(--line);border-radius:10px;
+    background:rgba(251,246,238,.9);
+    font-size:11.5px;color:var(--muted);letter-spacing:.3px;
+  }
+  .lg{display:inline-block;width:11px;height:11px;margin-right:5px;vertical-align:-1px}
+  .lg-root{background:var(--cinnabar);border-radius:50%}
+  .lg-syn{background:#f7e6d4;border:1.5px solid #b9703f;border-radius:50%}
+  .lg-treat{background:#efe3cf;border:1.5px solid #a89478;border-radius:3px;width:13px;height:9px}
+  .lg-herb{background:#e8f0ea;border:1.5px solid var(--jade);border-radius:50%}
+  .lg-pair{background:none;border:none;width:20px;height:0;border-top:2px dashed var(--gold);vertical-align:3px}
+
+  /* ---------- 右侧面板 ---------- */
+  .info{
+    width:356px;flex:0 0 356px;
+    border-left:1px solid var(--line);
+    background:rgba(255,252,246,.72);
+    overflow-y:auto;
+    padding:26px 26px 44px;
+  }
+  .info::-webkit-scrollbar{width:8px}
+  .info::-webkit-scrollbar-thumb{background:#ddcfbb;border-radius:4px}
+  .ip-kicker{font-size:11px;letter-spacing:2.5px;color:var(--cinnabar)}
+  .info h2{margin:7px 0 0;font-family:var(--serif);font-size:25px;letter-spacing:2px;font-weight:600;color:#3a2a1b}
+  .ip-lead{margin:13px 0 0;font-size:13.5px;line-height:1.85;color:var(--ink-2)}
+  .ip-sec{margin-top:20px;padding-top:15px;border-top:1px dashed var(--line)}
+  .ip-sec h3{margin:0 0 8px;font-size:11.5px;letter-spacing:1.8px;color:var(--muted);font-weight:600}
+  .ip-sec p{margin:0;font-size:13.5px;line-height:1.78;color:var(--ink-2)}
+  .ip-sec.caution h3{color:#a2602c}
+  .ip-sec.caution p{color:#7a5a3a}
+  .tiny{font-size:11.5px;line-height:1.7;color:var(--muted)}
+  .chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:2px}
+  .chip{
+    font:inherit;font-size:12.5px;line-height:1.4;
+    padding:6px 12px;border-radius:999px;
+    border:1px solid var(--line);background:#fffdf9;color:var(--ink-2);
+    cursor:pointer;transition:all .16s ease;
+  }
+  .chip:hover{border-color:var(--cinnabar);color:var(--cinnabar);background:#fff8f0;transform:translateY(-1px)}
+  .chip-gold{border-color:#e2d0a4;background:#fdf8ea;color:#8a6a1e}
+  .chip-gold:hover{border-color:var(--gold);color:#7a5c14;background:#fbf2da}
+  .chip i{font-style:normal;font-size:10.5px;color:#a8873c;margin-left:2px}
+  .steps{margin:12px 0 0;padding-left:20px;color:var(--ink-2);font-size:13px;line-height:2}
+  .steps b{color:var(--cinnabar);font-weight:600}
+  .quick{display:flex;gap:10px;margin-top:24px}
+  .quick button{
+    font:inherit;font-size:13.5px;padding:9px 16px;border-radius:9px;
+    border:1px solid var(--cinnabar);background:var(--cinnabar);color:#fff8ec;cursor:pointer;
+    transition:all .16s ease;
+  }
+  .quick button.ghost{background:transparent;color:var(--cinnabar)}
+  .quick button:hover{background:#8f2e20;border-color:#8f2e20;color:#fff8ec}
+  .quick button.ghost:hover{background:#fff4e9;color:var(--cinnabar)}
+  .facts{margin:18px 0 0;display:flex;flex-direction:column;gap:9px}
+  .facts>div{display:flex;gap:12px;align-items:baseline}
+  .facts dt{flex:0 0 38px;font-size:11.5px;color:var(--muted);letter-spacing:1.5px}
+  .facts dd{margin:0;font-size:13px;line-height:1.7;color:var(--ink-2)}
+  .facts dd.strong{color:var(--ink);font-weight:600}
+  .ip-note{margin-top:22px;font-size:11.5px;color:#a2917b;line-height:1.7}
+
+  /* ---------- 图谱：节点 ---------- */
+  .node{cursor:pointer;transition:opacity .38s ease}
+  .node:focus{outline:none}
+  .node:focus-visible .halo{stroke:var(--cinnabar);stroke-width:2.4}
+  .node.dim{opacity:.18}
+  .node.dim:hover{opacity:.75}
+  .node .halo{fill:none;stroke:transparent;stroke-width:2;transition:stroke .3s ease,stroke-width .3s ease}
+  .node .body{transition:stroke .25s ease,stroke-width .25s ease,fill .25s ease}
+  .node .label,.node .sub{pointer-events:none;user-select:none;text-anchor:middle;dominant-baseline:middle;font-family:var(--serif)}
+  .node .label{font-weight:600}
+  .node .sub{font-family:var(--sans);fill:var(--muted)}
+
+  .node.root .body{fill:var(--cinnabar);stroke:#8f2e20;stroke-width:1.5}
+  .node.root .label{fill:#fff8ec;font-size:25px;letter-spacing:3px}
+  .node.root .sub{fill:#f2c9ba;font-size:11px;letter-spacing:2px}
+  .node.root .halo{stroke:var(--cinnabar);animation:rootPulse 3.2s ease-in-out infinite}
+  #graph.touched .node.root:not(.selected) .halo{animation:none;stroke:transparent}
+  @keyframes rootPulse{0%,100%{stroke-opacity:.18}50%{stroke-opacity:.8}}
+
+  .node.syndrome .body{fill:#f9eddf;stroke:#b9703f;stroke-width:2}
+  .node.syndrome .label{fill:#7b3d1e;font-size:17px;letter-spacing:1.5px}
+  .node.syndrome .sub{font-size:11px;letter-spacing:.5px}
+
+  .node.treatment .body{fill:#f2e8d6;stroke:#a89478;stroke-width:1.8}
+  .node.treatment .label{fill:#6b4f2f;font-size:16px;letter-spacing:1.5px}
+  .node.treatment .sub{font-size:10px;letter-spacing:1.5px}
+
+  .node.herb .body{fill:#eef3ec;stroke:var(--jade);stroke-width:2}
+  .node.herb .label{fill:#2f574c;font-size:17px;letter-spacing:1px}
+  .node.herb.warm .body{fill:#fbeee0;stroke:#c68a5e}
+  .node.herb.warm .label{fill:#7a4222}
+  .node.herb.key .body{fill:#f8ddc9;stroke:#b9703f;stroke-width:2.6}
+  .node.herb.key .label{font-size:20px;letter-spacing:2px}
+  .node .key-badge-bg{fill:#fdf4e2;stroke:#dcc48f;stroke-width:1}
+  .node .key-badge{fill:#a8873c;font-family:var(--sans);font-size:9.5px;letter-spacing:1.5px}
+
+  .node.on-path .halo{stroke:rgba(168,57,42,.42);stroke-width:2}
+  .node.pair-lit .halo{stroke:var(--gold);stroke-width:2;stroke-dasharray:4 4}
+  .node.selected .halo{stroke:var(--cinnabar);stroke-width:2.6;stroke-dasharray:none}
+  .node.selected .body{stroke:var(--cinnabar);stroke-width:3.2}
+  .node.selected .label{fill:#7a2317}
+  .node.root.selected .label{fill:#fff8ec}
+
+  /* ---------- 图谱：连线 ---------- */
+  .edge{transition:opacity .38s ease}
+  .edge path{fill:none;stroke:#c1ad94;stroke-width:1.6;stroke-linecap:round;transition:stroke .3s ease,stroke-width .3s ease,opacity .3s ease}
+  .edge.dim{opacity:.12}
+  .edge.is-path path{stroke:var(--cinnabar);stroke-width:2.8}
+  .edge.pair path{stroke:var(--gold);stroke-width:1.8;stroke-dasharray:5 6;opacity:.55}
+  .edge.pair.is-pair-lit path{opacity:1;stroke-width:2.4}
+  .edge.pair.dim{opacity:.1}
+  .edge-label{
+    font-family:var(--sans);font-size:10.5px;letter-spacing:.6px;
+    fill:#a07a25;text-anchor:middle;
+    paint-order:stroke;stroke:var(--paper);stroke-width:3.5px;stroke-linejoin:round;
+    opacity:0;transition:opacity .3s ease;pointer-events:none;
+  }
+  .edge.is-pair-lit .edge-label{opacity:1}
+
+  @media (max-width:960px){
+    .workspace{flex-direction:column}
+    .info{width:auto;flex:0 0 auto;border-left:none;border-top:1px solid var(--line)}
+    .graph-panel{min-height:66vh}
+    .top{gap:14px;padding:12px 18px}
+    .pathbar{order:3;flex-basis:100%}
+    .top-actions{margin-left:0}
+    .hint{display:none}
+  }
+  @media (max-width:560px){
+    .brand-text h1{font-size:18px;letter-spacing:2px}
+    .seal{width:38px;height:38px;line-height:38px;font-size:21px}
+    .graph-panel{min-height:58vh}
+    .legend{left:10px;top:10px;gap:10px;padding:7px 10px}
+  }
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div class="brand">
+    <div class="seal">表</div>
+    <div class="brand-text">
+      <h1>解表药知识图谱</h1>
+      <p>以证统药 · 证 → 法 → 药 · 重点配伍</p>
+    </div>
+  </div>
+  <nav class="pathbar" id="pathbar" aria-label="学习路径"></nav>
+  <div class="top-actions">
+    <span class="hint">点节点逐层点亮，未选中的退为背景</span>
+    <button class="btn" id="resetBtn" type="button">重置</button>
+  </div>
+</header>
+
+<main class="workspace">
+  <section class="graph-panel">
+    <div class="graph-wrap">
+      <div class="legend" aria-hidden="true">
+        <span><i class="lg lg-root"></i>证候</span>
+        <span><i class="lg lg-syn"></i>证类</span>
+        <span><i class="lg lg-treat"></i>治法</span>
+        <span><i class="lg lg-herb"></i>中药</span>
+        <span><i class="lg lg-pair"></i>重点配伍</span>
+      </div>
+      <svg id="graph" viewBox="10 0 930 880" preserveAspectRatio="xMidYMid meet" role="img" aria-label="解表药知识图谱：表证分风寒、风热，下接治法与中药，并标注重点配伍"></svg>
+    </div>
+  </section>
+
+  <aside class="info" id="infoPanel"></aside>
+</main>
+
+<script>
+(function(){
+  'use strict';
+
+  var NS = 'http://www.w3.org/2000/svg';
+
+  /* =================== 数据 =================== */
+  var NODES = [
+    {id:'root',     type:'root',      label:'表证',     sub:'外邪袭表',        x:104, y:440, r:64},
+    {id:'fenghan',  type:'syndrome',  label:'风寒表证', sub:'恶寒重·无汗',      x:316, y:268, r:54},
+    {id:'fengre',   type:'syndrome',  label:'风热表证', sub:'发热重·咽痛',      x:316, y:612, r:54},
+    {id:'fasan',    type:'treatment', label:'发散风寒', sub:'辛温解表',        x:560, y:212, w:140, h:56},
+    {id:'shusan',   type:'treatment', label:'疏散风热', sub:'辛凉解表',        x:560, y:668, w:140, h:56},
+
+    {id:'mahuang',  type:'herb', label:'麻黄', x:724, y:60,  r:42, key:true, flavor:'warm'},
+    {id:'guizhi',   type:'herb', label:'桂枝', x:827, y:110, r:34, flavor:'warm'},
+    {id:'jingjie',  type:'herb', label:'荆芥', x:884, y:179, r:34, flavor:'warm'},
+    {id:'fangfeng', type:'herb', label:'防风', x:884, y:253, r:34, flavor:'warm'},
+    {id:'qianghuo', type:'herb', label:'羌活', x:827, y:322, r:34, flavor:'warm'},
+    {id:'baizhi',   type:'herb', label:'白芷', x:724, y:372, r:34, flavor:'warm'},
+
+    {id:'bohe',      type:'herb', label:'薄荷',   x:724, y:508, r:34, flavor:'cool'},
+    {id:'niubangzi', type:'herb', label:'牛蒡子', x:827, y:558, r:34, flavor:'cool'},
+    {id:'sangye',    type:'herb', label:'桑叶',   x:884, y:627, r:34, flavor:'cool'},
+    {id:'juhua',     type:'herb', label:'菊花',   x:884, y:701, r:34, flavor:'cool'},
+    {id:'chaihu',    type:'herb', label:'柴胡',   x:827, y:770, r:34, flavor:'cool'},
+    {id:'gegen',     type:'herb', label:'葛根',   x:724, y:820, r:34, flavor:'cool'}
+  ];
+
+  var EDGES = [
+    {id:'e-root-fenghan',  source:'root',    target:'fenghan', type:'hierarchy'},
+    {id:'e-root-fengre',   source:'root',    target:'fengre',  type:'hierarchy'},
+    {id:'e-fenghan-fasan', source:'fenghan', target:'fasan',   type:'hierarchy'},
+    {id:'e-fengre-shusan', source:'fengre',  target:'shusan',  type:'hierarchy'},
+
+    {id:'e-fasan-mahuang',  source:'fasan', target:'mahuang',  type:'hierarchy'},
+    {id:'e-fasan-guizhi',   source:'fasan', target:'guizhi',   type:'hierarchy'},
+    {id:'e-fasan-jingjie',  source:'fasan', target:'jingjie',  type:'hierarchy'},
+    {id:'e-fasan-fangfeng', source:'fasan', target:'fangfeng', type:'hierarchy'},
+    {id:'e-fasan-qianghuo', source:'fasan', target:'qianghuo', type:'hierarchy'},
+    {id:'e-fasan-baizhi',   source:'fasan', target:'baizhi',   type:'hierarchy'},
+
+    {id:'e-shusan-bohe',      source:'shusan', target:'bohe',      type:'hierarchy'},
+    {id:'e-shusan-niubangzi', source:'shusan', target:'niubangzi', type:'hierarchy'},
+    {id:'e-shusan-sangye',    source:'shusan', target:'sangye',    type:'hierarchy'},
+    {id:'e-shusan-juhua',     source:'shusan', target:'juhua',     type:'hierarchy'},
+    {id:'e-shusan-chaihu',    source:'shusan', target:'chaihu',    type:'hierarchy'},
+    {id:'e-shusan-gegen',     source:'shusan', target:'gegen',     type:'hierarchy'},
+
+    {id:'p-mahuang-guizhi',    source:'mahuang',  target:'guizhi',   type:'pair', label:'相须发汗'},
+    {id:'p-jingjie-fangfeng',  source:'jingjie',  target:'fangfeng', type:'pair', label:'相须解表'},
+    {id:'p-qianghuo-baizhi',   source:'qianghuo', target:'baizhi',   type:'pair', label:'祛风止痛'},
+    {id:'p-bohe-niubangzi',    source:'bohe',     target:'niubangzi',type:'pair', label:'疏风利咽'},
+    {id:'p-sangye-juhua',      source:'sangye',   target:'juhua',    type:'pair', label:'疏风清热'},
+    {id:'p-chaihu-gegen',      source:'chaihu',   target:'gegen',    type:'pair', label:'解肌退热'}
+  ];
+
+  var NODE_MAP = {};
+  var PARENT = {};
+  NODES.forEach(function(n){ NODE_MAP[n.id] = n; });
+  EDGES.forEach(function(e){ if(e.type === 'hierarchy') PARENT[e.target] = e.source; });
+
+  /* =================== 详情文案 =================== */
+  var SYNDROME_INFO = {
+    fenghan: {
+      sym:'恶寒重，发热轻，无汗，头身疼痛，鼻塞流清涕，脉浮紧。',
+      path:'风寒束表，卫阳被遏，肺气不宣。',
+      treat:'发散风寒（辛温解表）',
+      treatId:'fasan',
+      diff:'表实证：无汗、脉浮紧，治当发汗解表；表虚证：汗出、脉浮缓，治当调和营卫。',
+      herbs:['mahuang','guizhi','jingjie','fangfeng','qianghuo','baizhi']
+    },
+    fengre: {
+      sym:'发热重，微恶风寒，汗出不畅，咽喉肿痛，口渴，脉浮数。',
+      path:'风热犯表，卫表不和，热邪伤津。',
+      treat:'疏散风热（辛凉解表）',
+      treatId:'shusan',
+      diff:'与风寒表证相比，本证发热重、咽痛明显、口渴、脉浮数，恶寒较轻。',
+      herbs:['bohe','niubangzi','sangye','juhua','chaihu','gegen']
+    }
+  };
+
+  var TREAT_INFO = {
+    fasan: {
+      alias:'辛温解表',
+      applicable:'风寒表证：恶寒重、无汗、头身疼痛、脉浮紧。',
+      points:'用辛温发散之品，使风寒之邪从肌表而解。麻黄、桂枝为发汗解表要药；荆芥、防风药性平和，温而不燥；羌活、白芷兼能止痛通窍。',
+      notice:'中病即止，不可过汗，以免伤阳耗液；表虚自汗、阴虚盗汗者慎用。',
+      herbs:['mahuang','guizhi','jingjie','fangfeng','qianghuo','baizhi']
+    },
+    shusan: {
+      alias:'辛凉解表',
+      applicable:'风热表证：发热重、微恶风寒、咽痛、口渴、脉浮数。',
+      points:'用辛凉轻清之品，疏散风热而不伤津。薄荷、牛蒡子长于利咽透疹；桑叶、菊花兼清肝明目；柴胡、葛根善解肌退热。',
+      notice:'不宜久煎，以免挥发性成分散失；风寒表证忌用。',
+      herbs:['bohe','niubangzi','sangye','juhua','chaihu','gegen']
+    }
+  };
+
+  var HERB_INFO = {
+    mahuang: {
+      nature:'辛、微苦，温', meridian:'归肺、膀胱经',
+      effects:'发汗解表，宣肺平喘，利水消肿，散寒通滞',
+      indication:'风寒表实证（恶寒无汗、脉浮紧）；咳嗽气喘；风水水肿；风寒湿痹、阴疽痰核。',
+      others:'配杏仁宣肺平喘；配石膏清肺平喘；配白术宣肺利水。',
+      formulas:'麻黄汤、麻杏石甘汤、越婢汤',
+      caution:'发汗力强，表虚自汗、阴虚盗汗、肾虚喘咳者慎用。'
+    },
+    guizhi: {
+      nature:'辛、甘，温', meridian:'归心、肺、膀胱经',
+      effects:'发汗解肌，温通经脉，助阳化气，平冲降气',
+      indication:'风寒表虚证（汗出、脉浮缓）；寒凝血滞诸痛；痰饮、蓄水；心悸、奔豚。',
+      others:'配白芍调和营卫；配茯苓温阳化饮；配附子温经散寒。',
+      formulas:'桂枝汤、麻黄汤、苓桂术甘汤',
+      caution:'辛温助热，阴虚火旺、血热妄行及孕妇慎用。'
+    },
+    jingjie: {
+      nature:'辛，微温', meridian:'归肺、肝经',
+      effects:'解表散风，透疹，消疮；荆芥炭止血',
+      indication:'感冒头痛、麻疹不透、风疹瘙痒、疮疡初起；便血、崩漏（用炭）。',
+      others:'配防风（荆防）发散平和；配薄荷、连翘透疹。',
+      formulas:'荆防败毒散、银翘散',
+      caution:'辛温发散，表虚自汗、阴虚头痛者慎用。'
+    },
+    fangfeng: {
+      nature:'辛、甘，微温', meridian:'归膀胱、肝、脾经',
+      effects:'祛风解表，胜湿止痛，止痉',
+      indication:'感冒头痛、风湿痹痛、风疹瘙痒、破伤风。',
+      others:'配荆芥解表；配羌活胜湿止痛；配天南星、白附子止痉。',
+      formulas:'荆防败毒散、九味羌活汤、玉真散',
+      caution:'阴血亏虚、热病动风者不宜。'
+    },
+    qianghuo: {
+      nature:'辛、苦，温', meridian:'归膀胱、肾经',
+      effects:'解表散寒，祛风除湿，止痛',
+      indication:'风寒感冒头痛（尤宜太阳头痛）、风寒湿痹、肩背酸痛。',
+      others:'配独活祛风湿；配白芷、川芎止头痛。',
+      formulas:'九味羌活汤、羌活胜湿汤',
+      caution:'辛温燥烈，阴血亏虚、脾胃虚弱者慎用。'
+    },
+    baizhi: {
+      nature:'辛，温', meridian:'归胃、大肠、肺经',
+      effects:'解表散寒，祛风止痛，通鼻窍，燥湿止带，消肿排脓',
+      indication:'风寒感冒、头痛牙痛、鼻渊鼻塞、带下、疮疡肿痛。',
+      others:'配苍耳子、辛夷通鼻窍；配川芎止痛。',
+      formulas:'苍耳子散、仙方活命饮',
+      caution:'辛温香燥，阴虚血热者慎用，用量不宜过大。'
+    },
+    bohe: {
+      nature:'辛，凉', meridian:'归肺、肝经',
+      effects:'疏散风热，清利头目，利咽，透疹，疏肝行气',
+      indication:'风热感冒、头痛目赤、咽喉肿痛、麻疹不透、肝郁气滞。',
+      others:'配桔梗、甘草利咽；配连翘、荆芥透疹。',
+      formulas:'银翘散、桑菊饮、逍遥散',
+      caution:'芳香辛散，不宜久煎；体虚多汗者慎用。'
+    },
+    niubangzi: {
+      nature:'辛、苦，寒', meridian:'归肺、胃经',
+      effects:'疏散风热，宣肺透疹，解毒利咽',
+      indication:'风热感冒、咳嗽痰多、咽喉肿痛、麻疹不透、痄腮。',
+      others:'配连翘、桔梗解毒利咽；配薄荷、蝉蜕透疹。',
+      formulas:'银翘散、普济消毒饮',
+      caution:'性寒滑肠，气虚便溏者慎用。'
+    },
+    sangye: {
+      nature:'甘、苦，寒', meridian:'归肺、肝经',
+      effects:'疏散风热，清肺润燥，清肝明目',
+      indication:'风热感冒、温病初起、肺热燥咳、肝阳眩晕、目赤昏花。',
+      others:'配菊花疏风清热；配石膏清肺。',
+      formulas:'桑菊饮、清燥救肺汤',
+      caution:'蜜炙长于润肺止咳。'
+    },
+    juhua: {
+      nature:'甘、苦，微寒', meridian:'归肺、肝经',
+      effects:'疏散风热，平抑肝阳，清肝明目，清热解毒',
+      indication:'风热感冒、头痛眩晕、目赤肿痛、疮痈肿毒。',
+      others:'配桑叶疏风清热；配枸杞子明目；配石决明平肝。',
+      formulas:'桑菊饮、杞菊地黄丸',
+      caution:'黄菊偏疏散风热，白菊偏平肝明目。'
+    },
+    chaihu: {
+      nature:'辛、苦，微寒', meridian:'归肝、胆、肺经',
+      effects:'疏散退热，疏肝解郁，升举阳气',
+      indication:'邪在少阳（寒热往来）、感冒发热、肝郁气滞、气虚下陷。',
+      others:'配黄芩和解少阳；配白芍疏肝；配升麻、黄芪升阳。',
+      formulas:'小柴胡汤、柴葛解肌汤、补中益气汤',
+      caution:'性升散，阴虚阳亢、肝风内动者慎用。'
+    },
+    gegen: {
+      nature:'甘、辛，凉', meridian:'归脾、胃、肺经',
+      effects:'解肌退热，生津止渴，透疹，升阳止泻，通经活络，解酒毒',
+      indication:'外感发热头痛、项背强痛、热病口渴、麻疹不透、热泻热痢、消渴。',
+      others:'配柴胡、黄芩解肌退热；配升麻透疹；配黄连治热泻。',
+      formulas:'柴葛解肌汤、升麻葛根汤、葛根芩连汤',
+      caution:'胃寒者慎用；表虚多汗者不宜。'
+    }
+  };
+
+  var ROOT_HTML = ''
+    + '<div class="ip-kicker">证候总纲</div>'
+    + '<h2>表证</h2>'
+    + '<p class="ip-lead">外邪从皮毛、口鼻侵入肌表所致的证候，是解表药的共同主治。本图只收表证，按风寒、风热分为两类。</p>'
+    + '<div class="ip-sec"><h3>辨证要点</h3>'
+    +   '<p>恶寒发热、头身疼痛、鼻塞咳嗽、脉浮。邪在肌表，病位浅，治当因势利导，从表而解。</p></div>'
+    + '<div class="ip-sec"><h3>本图两类</h3>'
+    +   '<div class="chips"><button class="chip" data-jump="fenghan" type="button">风寒表证</button>'
+    +   '<button class="chip" data-jump="fengre" type="button">风热表证</button></div></div>'
+    + '<div class="ip-sec"><h3>读图顺序</h3>'
+    +   '<p class="tiny">表证 → 证类 → 治法 → 中药 → 重点配伍。未选中的节点会退为背景，但不会消失。</p></div>'
+    + '<div class="ip-note">方剂不在主图中，只在药物详情的“代表方”里作拓展。</div>';
+
+  var EMPTY_HTML = ''
+    + '<div class="ip-kicker">怎么读这张图</div>'
+    + '<h2>从“证”出发，一路点到“药”</h2>'
+    + '<p class="ip-lead">表证分风寒、风热；点证类看治法，点治法看药物，点药物看它和谁配伍最要紧。</p>'
+    + '<ol class="steps">'
+    +   '<li><b>表证</b> → 风寒表证 / 风热表证</li>'
+    +   '<li><b>证类</b> → 发散风寒 / 疏散风热</li>'
+    +   '<li><b>治法</b> → 该法下的重点药</li>'
+    +   '<li><b>药物</b> → 点亮整条路径 + 重点配伍</li>'
+    + '</ol>'
+    + '<div class="quick">'
+    +   '<button type="button" data-jump="root">从表证开始</button>'
+    +   '<button type="button" class="ghost" data-jump="mahuang">直接看麻黄</button>'
+    + '</div>'
+    + '<div class="ip-note">点“麻黄”即可看到：表证 → 风寒表证 → 发散风寒 → 麻黄，并同时点亮麻黄—桂枝的配伍。</div>';
+
+  /* =================== 状态 =================== */
+  var selectedId = null;
+  var pathbar = document.getElementById('pathbar');
+  var infoPanel = document.getElementById('infoPanel');
+  var svg = document.getElementById('graph');
+
+  /* =================== 工具 =================== */
+  function mk(tag, attrs, parent){
+    var e = document.createElementNS(NS, tag);
+    if(attrs){ for(var k in attrs){ if(Object.prototype.hasOwnProperty.call(attrs,k)) e.setAttribute(k, attrs[k]); } }
+    if(parent) parent.appendChild(e);
+    return e;
+  }
+  function num(v){ return Math.round(v * 100) / 100; }
+
+  function getPath(id){
+    var path = [], cur = id;
+    while(cur){ path.unshift(cur); cur = PARENT[cur]; }
+    return path;
+  }
+
+  function boundaryPoint(node, tx, ty, pad){
+    pad = pad || 6;
+    var dx = tx - node.x, dy = ty - node.y;
+    if(node.type === 'treatment'){
+      var hw = node.w / 2 + pad, hh = node.h / 2 + pad;
+      var sx = Math.abs(dx) < 0.001 ? Infinity : hw / Math.abs(dx);
+      var sy = Math.abs(dy) < 0.001 ? Infinity : hh / Math.abs(dy);
+      var s = Math.min(sx, sy);
+      return {x: node.x + dx * s, y: node.y + dy * s};
+    }
+    var len = Math.sqrt(dx*dx + dy*dy) || 1;
+    var r = node.r + pad;
+    return {x: node.x + dx / len * r, y: node.y + dy / len * r};
+  }
+
+  function pairGeom(e){
+    var a = NODE_MAP[e.source], b = NODE_MAP[e.target];
+    var mx = (a.x + b.x) / 2, my = (a.y + b.y) / 2;
+    var dx = b.x - a.x, dy = b.y - a.y;
+    var len = Math.sqrt(dx*dx + dy*dy) || 1;
+    var nx = -dy / len, ny = dx / len;
+    var parent = NODE_MAP[PARENT[e.source]] || {x: mx, y: my};
+    if((mx - parent.x) * nx + (my - parent.y) * ny < 0){ nx = -nx; ny = -ny; }
+    var off = 26;
+    var cx = mx + nx * off, cy = my + ny * off;
+    var start = boundaryPoint(a, b.x, b.y, 5);
+    var end = boundaryPoint(b, a.x, a.y, 5);
+    return {
+      sx:start.x, sy:start.y, ex:end.x, ey:end.y, cx:cx, cy:cy,
+      lx: num(mx + nx * 30),
+      ly: num(my + ny * 30)
+    };
+  }
+
+  /* =================== 建图 =================== */
+  function buildGraph(){
+    svg.innerHTML = '';
+    var defs = mk('defs', {}, svg);
+    defs.innerHTML = ''
+      + '<marker id="arrow" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="7.5" markerHeight="7.5" markerUnits="userSpaceOnUse" orient="auto">'
+      +   '<path d="M1 1 L7 4 L1 7 Z" fill="#c2b09a"></path></marker>'
+      + '<marker id="arrowLit" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="8.5" markerHeight="8.5" markerUnits="userSpaceOnUse" orient="auto">'
+      +   '<path d="M1 1 L7 4 L1 7 Z" fill="#a8392a"></path></marker>';
+
+    var edgeLayer = mk('g', {id:'edgeLayer'}, svg);
+    var nodeLayer = mk('g', {id:'nodeLayer'}, svg);
+
+    EDGES.forEach(function(e){
+      var g = mk('g', {'class':'edge' + (e.type === 'pair' ? ' pair' : ''), 'data-id':e.id, 'data-type':e.type}, edgeLayer);
+      var p = mk('path', {}, g);
+
+      if(e.type === 'pair'){
+        var geo = pairGeom(e);
+        p.setAttribute('d', 'M' + num(geo.sx) + ' ' + num(geo.sy)
+          + ' Q' + num(geo.cx) + ' ' + num(geo.cy)
+          + ' ' + num(geo.ex) + ' ' + num(geo.ey));
+        var label = mk('text', {'class':'edge-label', x:geo.lx, y:geo.ly}, g);
+        label.textContent = e.label;
+      }else{
+        var s = NODE_MAP[e.source], t = NODE_MAP[e.target];
+        var start = boundaryPoint(s, t.x, t.y, 5);
+        var end = boundaryPoint(t, s.x, s.y, 7);
+        p.setAttribute('d', 'M' + num(start.x) + ' ' + num(start.y) + ' L' + num(end.x) + ' ' + num(end.y));
+        p.setAttribute('marker-end', 'url(#arrow)');
+      }
+    });
+
+    NODES.forEach(function(n){
+      var g = mk('g', {
+        'class':'node ' + n.type
+          + (n.flavor ? ' ' + n.flavor : '')
+          + (n.key ? ' key' : ''),
+        transform:'translate(' + n.x + ',' + n.y + ')',
+        tabindex:'0',
+        role:'button',
+        'aria-label':n.label + (n.sub ? '，' + n.sub : '')
+      }, nodeLayer);
+      g.setAttribute('data-id', n.id);
+
+      if(n.type === 'treatment'){
+        g.innerHTML = ''
+          + '<rect class="halo" x="' + (-n.w/2 - 6) + '" y="' + (-n.h/2 - 6) + '" width="' + (n.w + 12) + '" height="' + (n.h + 12) + '" rx="16"></rect>'
+          + '<rect class="body" x="' + (-n.w/2) + '" y="' + (-n.h/2) + '" width="' + n.w + '" height="' + n.h + '" rx="12"></rect>'
+          + '<text class="label" y="-6">' + n.label + '</text>'
+          + '<text class="sub" y="15">' + n.sub + '</text>';
+        return;
+      }
+
+      var labelY = n.type === 'root' ? -5 : (n.type === 'syndrome' ? -7 : 0);
+      var subY = n.type === 'root' ? 21 : 17;
+      var extra = (n.key)
+        ? '<rect class="key-badge-bg" x="-27" y="' + (n.r + 6) + '" width="54" height="17" rx="8.5"></rect>'
+          + '<text class="key-badge" y="' + (n.r + 18.5) + '">重点药</text>'
+        : '';
+
+      g.innerHTML = ''
+        + '<circle class="halo" r="' + (n.r + 11) + '"></circle>'
+        + '<circle class="body" r="' + n.r + '"></circle>'
+        + '<text class="label" y="' + labelY + '">' + n.label + '</text>'
+        + (n.sub ? '<text class="sub" y="' + subY + '">' + n.sub + '</text>' : '')
+        + extra;
+    });
+  }
+
+  /* =================== 高亮计算 =================== */
+  function computeState(){
+    if(!selectedId){
+      return {focus:new Set(NODES.map(function(n){ return n.id; })), pathEdges:new Set(), pairEdges:new Set(), pairNodes:new Set()};
+    }
+    var path = getPath(selectedId);
+    var focus = new Set(path);
+    var pathEdges = new Set();
+    var pairEdges = new Set();
+    var pairNodes = new Set();
+
+    for(var i = 1; i < path.length; i++){
+      pathEdges.add('e-' + path[i-1] + '-' + path[i]);
+    }
+
+    var node = NODE_MAP[selectedId];
+    NODES.forEach(function(n){
+      if(PARENT[n.id] === selectedId) focus.add(n.id);
+    });
+
+    if(node.type === 'root' || node.type === 'syndrome' || node.type === 'treatment'){
+      EDGES.forEach(function(e){
+        if(e.type === 'hierarchy' && e.source === selectedId) pathEdges.add(e.id);
+      });
+    }
+
+    if(node.type === 'treatment'){
+      EDGES.forEach(function(e){
+        if(e.type === 'pair' && focus.has(e.source) && focus.has(e.target)) pairEdges.add(e.id);
+      });
+    }
+
+    if(node.type === 'herb'){
+      EDGES.forEach(function(e){
+        if(e.type === 'pair' && (e.source === selectedId || e.target === selectedId)){
+          var other = e.source === selectedId ? e.target : e.source;
+          focus.add(other);
+          pairNodes.add(other);
+          pairEdges.add(e.id);
+        }
+      });
+    }
+
+    return {focus:focus, pathEdges:pathEdges, pairEdges:pairEdges, pairNodes:pairNodes};
+  }
+
+  function applyState(){
+    var st = computeState();
+
+    var nodeEls = svg.querySelectorAll('.node');
+    for(var i = 0; i < nodeEls.length; i++){
+      var g = nodeEls[i];
+      var id = g.getAttribute('data-id');
+      var isSelected = id === selectedId;
+      var isPair = st.pairNodes.has(id);
+      g.classList.toggle('dim', !st.focus.has(id));
+      g.classList.toggle('selected', isSelected);
+      g.classList.toggle('pair-lit', isPair);
+      g.classList.toggle('on-path', st.focus.has(id) && !isPair && !isSelected);
+    }
+
+    var edgeEls = svg.querySelectorAll('.edge');
+    for(var j = 0; j < edgeEls.length; j++){
+      var eg = edgeEls[j];
+      var eid = eg.getAttribute('data-id');
+      var isPath = st.pathEdges.has(eid);
+      var isPairLit = st.pairEdges.has(eid);
+      eg.classList.toggle('dim', !!selectedId && !isPath && !isPairLit);
+      eg.classList.toggle('is-path', isPath);
+      eg.classList.toggle('is-pair-lit', isPairLit);
+      var p = eg.querySelector('path');
+      if(eg.getAttribute('data-type') === 'hierarchy'){
+        p.setAttribute('marker-end', isPath ? 'url(#arrowLit)' : 'url(#arrow)');
+      }
+    }
+
+    svg.classList.toggle('touched', !!selectedId);
+  }
+
+  /* =================== 面包屑 =================== */
+  function renderPathbar(){
+    if(!selectedId){
+      pathbar.innerHTML = '<span class="path-empty">全图 · 未选择</span>';
+      return;
+    }
+    var path = getPath(selectedId);
+    var html = '<span class="path-empty">学习路径</span>';
+    path.forEach(function(id, idx){
+      if(idx > 0) html += '<span class="arrow">→</span>';
+      var cls = idx === path.length - 1 ? 'crumb now' : 'crumb';
+      html += '<button class="' + cls + '" type="button" data-jump="' + id + '">' + NODE_MAP[id].label + '</button>';
+    });
+    pathbar.innerHTML = html;
+  }
+
+  /* =================== 详情面板 =================== */
+  function chip(id){
+    return '<button class="chip" type="button" data-jump="' + id + '">' + NODE_MAP[id].label + '</button>';
+  }
+
+  function rootHTML(){
+    var kids = NODES.filter(function(n){ return PARENT[n.id] === 'root'; });
+    var chips = kids.map(function(n){ return chip(n.id); }).join('');
+    return ''
+      + '<div class="ip-kicker">证候总纲</div>'
+      + '<h2>表证</h2>'
+      + '<p class="ip-lead">外邪从皮毛、口鼻侵入肌表所致的证候，是解表药的共同主治。本图只收表证，按风寒、风热分为两类。</p>'
+      + '<div class="ip-sec"><h3>辨证要点</h3>'
+      +   '<p>恶寒发热、头身疼痛、鼻塞咳嗽、脉浮。邪在肌表，病位浅，治当因势利导，从表而解。</p></div>'
+      + '<div class="ip-sec"><h3>本图两类</h3><div class="chips">' + chips + '</div></div>'
+      + '<div class="ip-sec"><h3>读图顺序</h3>'
+      +   '<p class="tiny">表证 → 证类 → 治法 → 中药 → 重点配伍。未选中的节点会退为背景，但不会消失。</p></div>'
+      + '<div class="ip-note">方剂不在主图中，只在药物详情的“代表方”里作拓展。</div>';
+  }
+
+  function syndromeHTML(n){
+    var d = SYNDROME_INFO[n.id];
+    var chips = d.herbs.map(chip).join('');
+    return ''
+      + '<div class="ip-kicker">证类 · 表证</div>'
+      + '<h2>' + n.label + '</h2>'
+      + '<p class="ip-lead">' + d.sym + '</p>'
+      + '<div class="ip-sec"><h3>病机</h3><p>' + d.path + '</p></div>'
+      + '<div class="ip-sec"><h3>治法</h3>'
+      +   '<div class="chips"><button class="chip chip-gold" type="button" data-jump="' + d.treatId + '">' + d.treat + '</button></div></div>'
+      + '<div class="ip-sec"><h3>本证重点药</h3><div class="chips">' + chips + '</div></div>'
+      + '<div class="ip-sec"><h3>鉴别</h3><p>' + d.diff + '</p></div>';
+  }
+
+  function treatmentHTML(n){
+    var d = TREAT_INFO[n.id];
+    var chips = d.herbs.map(chip).join('');
+    return ''
+      + '<div class="ip-kicker">治法 · ' + d.alias + '</div>'
+      + '<h2>' + n.label + '</h2>'
+      + '<p class="ip-lead">' + d.points + '</p>'
+      + '<div class="ip-sec"><h3>适用证候</h3><p>' + d.applicable + '</p></div>'
+      + '<div class="ip-sec"><h3>本图重点药（' + d.herbs.length + '）</h3><div class="chips">' + chips + '</div></div>'
+      + '<div class="ip-sec caution"><h3>使用注意</h3><p>' + d.notice + '</p></div>';
+  }
+
+  function herbHTML(n){
+    var d = HERB_INFO[n.id];
+    var parent = NODE_MAP[PARENT[n.id]];
+    var pairChips = '';
+    EDGES.forEach(function(e){
+      if(e.type !== 'pair') return;
+      if(e.source !== n.id && e.target !== n.id) return;
+      var other = e.source === n.id ? e.target : e.source;
+      pairChips += '<button class="chip chip-gold" type="button" data-jump="' + other + '">'
+        + NODE_MAP[other].label + '<i>· ' + e.label + '</i></button>';
+    });
+    if(!pairChips) pairChips = '<span class="tiny">本图中未设重点配伍</span>';
+    return ''
+      + '<div class="ip-kicker">中药 · ' + parent.label + '</div>'
+      + '<h2>' + n.label + '</h2>'
+      + '<dl class="facts">'
+      +   '<div><dt>性味</dt><dd>' + d.nature + '</dd></div>'
+      +   '<div><dt>归经</dt><dd>' + d.meridian + '</dd></div>'
+      +   '<div><dt>功效</dt><dd class="strong">' + d.effects + '</dd></div>'
+      +   '<div><dt>主治</dt><dd>' + d.indication + '</dd></div>'
+      + '</dl>'
+      + '<div class="ip-sec"><h3>重点配伍</h3><div class="chips">' + pairChips + '</div>'
+      +   '<p class="tiny" style="margin-top:8px">点击配伍药可跳转；金色虚线表示两药常相须为用。</p></div>'
+      + '<div class="ip-sec"><h3>其他常用配伍</h3><p>' + d.others + '</p></div>'
+      + '<div class="ip-sec"><h3>代表方（拓展）</h3><p>' + d.formulas + '</p></div>'
+      + '<div class="ip-sec caution"><h3>使用注意</h3><p>' + d.caution + '</p></div>';
+  }
+
+  function renderInfo(){
+    if(!selectedId){ infoPanel.innerHTML = EMPTY_HTML; return; }
+    var n = NODE_MAP[selectedId];
+    if(n.type === 'root') infoPanel.innerHTML = rootHTML();
+    else if(n.type === 'syndrome') infoPanel.innerHTML = syndromeHTML(n);
+    else if(n.type === 'treatment') infoPanel.innerHTML = treatmentHTML(n);
+    else infoPanel.innerHTML = herbHTML(n);
+    infoPanel.scrollTop = 0;
+  }
+
+  /* =================== 交互 =================== */
+  function select(id){
+    if(!id || !NODE_MAP[id]) return;
+    selectedId = id;
+    applyState();
+    renderPathbar();
+    renderInfo();
+  }
+
+  function reset(){
+    selectedId = null;
+    applyState();
+    renderPathbar();
+    renderInfo();
+  }
+
+  svg.addEventListener('click', function(ev){
+    var target = ev.target;
+    var node = target && target.closest ? target.closest('.node') : null;
+    if(node){ select(node.getAttribute('data-id')); }
+  });
+
+  svg.addEventListener('keydown', function(ev){
+    if(ev.key !== 'Enter' && ev.key !== ' ') return;
+    var target = ev.target;
+    var node = target && target.closest ? target.closest('.node') : null;
+    if(node){
+      ev.preventDefault();
+      select(node.getAttribute('data-id'));
+    }
+  });
+
+  document.addEventListener('click', function(ev){
+    var target = ev.target;
+    var jump = target && target.closest ? target.closest('[data-jump]') : null;
+    if(!jump) return;
+    var id = jump.getAttribute('data-jump');
+    if(jump.classList.contains('crumb') || jump.classList.contains('chip') || jump.tagName === 'BUTTON'){
+      if(selectedId === id && jump.classList.contains('crumb')) return;
+      selectedId = id;
+      applyState();
+      renderPathbar();
+      renderInfo();
+    }
+  });
+
+  document.getElementById('resetBtn').addEventListener('click', reset);
+  document.addEventListener('keydown', function(ev){
+    if(ev.key === 'Escape') reset();
+  });
+
+  /* =================== 启动 =================== */
+  buildGraph();
+  applyState();
+  renderPathbar();
+  renderInfo();
+})();
+</script>
+</body>
+</html>
