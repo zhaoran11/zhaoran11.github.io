@@ -112,14 +112,32 @@
   .herb .mk{position:absolute; top:-7px; right:-6px; font-size:10px; background:var(--ok); color:#fff;
     border-radius:10px; padding:1px 6px;}
 
-  .roles{margin-top:16px; border-top:1px dashed var(--line); padding-top:14px;}
-  .role-row{display:flex; align-items:center; gap:10px; padding:6px 0; font-size:13px;}
-  .role-row .nm{width:72px; color:var(--ink); font-weight:600;}
-  .role-row select{
-    font:inherit; font-size:12.5px; padding:4px 8px; border-radius:6px;
-    border:1px solid var(--line); background:#fff; color:var(--ink);
+  /* 自由作答 */
+  .free{
+    width:100%; min-height:118px; resize:vertical; display:block;
+    font:inherit; font-size:14px; line-height:1.95;
+    border:1px solid var(--line); border-radius:10px; padding:12px 14px;
+    background:var(--paper-2); color:var(--ink);
   }
-  .role-row .tip{font-size:11px; color:var(--ink-3); margin-left:auto;}
+  .free:focus{outline:none; border-color:#C9B99E; box-shadow:0 0 0 3px rgba(193,136,43,.09);}
+  .free::placeholder{color:var(--ink-3);}
+  .frow{display:flex; align-items:center; gap:12px; margin-top:11px; flex-wrap:wrap;}
+  .frow .cnt{font-size:12px; color:var(--ink-3);}
+  .tag{font-size:12px; border-radius:6px; padding:2px 9px; border:1px solid;}
+  .tag.ok{background:#F0F5F1; border-color:#CBDDD2; color:#245A4C;}
+  .tag.bad{background:#FBEDE6; border-color:#E0B3A4; color:#8A2F32;}
+  .fback{margin-top:14px;}
+  .fback .lbl{font-size:11.5px; color:var(--ink-3); margin-bottom:7px; letter-spacing:1px;}
+  .hintbox{
+    margin-top:14px; background:#FBF4E4; border:1px solid #EBD9B4;
+    border-left:3px solid var(--fa); border-radius:10px; padding:12px 15px;
+  }
+  .hintbox .lbl{font-size:11.5px; color:#8A6B22; letter-spacing:1px; margin-bottom:5px;}
+  .hintbox p{margin:0; font-size:13px; color:#5C4A1E; line-height:1.95;}
+  .hintbox.done{background:#F0F5F1; border-color:#CBDDD2; border-left-color:var(--ok);}
+  .hintbox.done p{color:#245A4C;}
+  .btn.small{font-size:12px; padding:4px 12px; margin-top:10px;}
+
   .locked .chip,.locked .herb{pointer-events:none;}
 
   .actions{
@@ -255,11 +273,14 @@
    用法：复制到 ./<章节名>/医案分析器.html，在 ADV 中追加本章医案。
    字段：
      text     病案原文（只放四诊资料，不要写辨证结论与处方，否则提前泄底）
-     sxOpts   四诊选项 [{id,n,ok}]        ok=false 为干扰项，建议 4–6 条
-     bj       病机选项 [{n,ok,why}]       why 为误判时的针对性解释
-     zf       治法 [{n,ok}]               单选
+     kp       自由作答的判分要点，每组同义词命中任一即算答到
+              { sx:[{n:"要点名", k:["同义词1","同义词2"]}, ...], bj:[...], zf:[...] }
+     kpBad    写错方向才扣分（原文没有的信息 / 辨证相反）
+              { sx:[{n:"汗出", k:["汗出"]}, ...], bj:[...], zf:[...] }
+     hint     逐层提示，只说往哪看，不给答案；每题 3 条
+              { sx:["提示1","提示2","提示3"], bj:[...], zf:[...] }
      pool     可选药物 id 数组            10–14 味，含 4 味以上禁忌药
-     need     必选药 {id:{w}}             仅计权重，不再区分君臣佐使
+     need     必选药 {id:{w}}             仅计权重，不区分君臣佐使
      ok       可用非首选 {id:{w}}         bad 性味相悖 {id:{why}}
      pairs    药对数组（推荐，可考多组配伍）
               [{opts:[[a,b]], ans:"a|b", rel:"相须", relOpts:[...], meaning:"..."}]
@@ -267,6 +288,8 @@
      analysis 参考答案 {bj, zf, xuanyao, diff, orig}
               herb:{n,t,g,rows:[[功效,本案对应,配伍]]}  // 可选：围绕某味药展开
    评分：四诊 20 + 病机 25 + 治法 15 + 选药 25 + 配伍 15 = 100
+   作答：前三步手写（不再点选），点「检查一下」只提示方向，不直接给答案；
+        写入原文没有的信息或辨证相反会扣分。
    答题码：学生提交后生成 TCM1.xxx.xxx；教师用 ?t=1 打开「教师汇总」粘贴统计
    ★ 换章节时同步替换 HERB 药物表；配伍 15 分在多个药对间均分。
    ============================================================ */
@@ -307,39 +330,67 @@
       text:"吴某，男，36岁，1984年2月15日就诊。患者以捕鱼虾为生，经常涉水淋雨。三日前突然畏冷发热，无汗，咳嗽声重，痰白而稀，脸面浮肿，小便不利，而延余诊治。脉浮，舌苔薄白。",
       meta:["男 · 36岁","1984年2月","病程 3 日","职业：捕鱼虾"],
       hint:"先看起病与诱因，再看寒热、汗之有无；最后注意：咳嗽与水肿为何同时出现？病位在何处？",
-      sxOpts:[
-        {id:"wl", n:"畏冷（恶寒）", ok:true},
-        {id:"fr", n:"发热", ok:true},
-        {id:"wh", n:"无汗", ok:true},
-        {id:"ks", n:"咳嗽声重", ok:true},
-        {id:"tb", n:"痰白而稀", ok:true},
-        {id:"fz", n:"脸面浮肿", ok:true},
-        {id:"xb", n:"小便不利", ok:true},
-        {id:"mf", n:"脉浮", ok:true},
-        {id:"tbh", n:"苔薄白", ok:true},
-        {id:"ys", n:"经常涉水淋雨", ok:true},
-        {id:"hc", n:"汗出", ok:false},
-        {id:"kk", n:"口渴喜饮", ok:false},
-        {id:"yt", n:"咽痛", ok:false},
-        {id:"th", n:"痰黄稠", ok:false},
-        {id:"fs", n:"脉浮数", ok:false},
-        {id:"sh", n:"舌红苔黄", ok:false}
-      ],
-      bj:[
-        {n:"风寒犯肺，肺气郁闭", ok:true, why:"久涉水湿，风寒外袭，首先犯肺。"},
-        {n:"卫阳被遏，腠理闭塞", ok:true, why:"卫阳不能温煦肌表，故畏冷、无汗、脉浮。"},
-        {n:"肺失宣降，通调水道失职", ok:true, why:"肺为水之上源，肺气闭郁则水道不利。"},
-        {n:"水湿泛溢肌肤", ok:true, why:"水道不通，水湿外溢，故脸面浮肿、小便不利。"},
-        {n:"风热犯表，热邪壅肺", ok:false, why:"痰白稀、苔薄白、口不渴、无咽痛，全无热象。"},
-        {n:"脾肾阳虚，水湿内停", ok:false, why:"起病急、伴畏冷发热与脉浮，属表证；阳虚水肿多起病缓、脉沉细、以下肢为甚。"},
-        {n:"痰湿阻肺，并无表证", ok:false, why:"畏冷发热、脉浮，表证显著，不能只作内伤痰湿论。"}
-      ],
-      zf:[
-        {n:"辛温解表，宣肺平喘，利水消肿", ok:true},
-        {n:"辛凉解表，清肺泄热", ok:false},
-        {n:"健脾温肾，化气行水", ok:false},
-        {n:"发汗解表，调和营卫", ok:false}
-      ],
+      /* 自由作答：每个要点给一组同义词，命中任一即算答到 */
+      kp:{
+        sx:[
+          {n:"恶寒（畏冷）", k:["恶寒","畏冷","怕冷","恶风","发冷","寒战"]},
+          {n:"发热", k:["发热","身热","发烧","体温升高"]},
+          {n:"无汗", k:["无汗","不出汗","汗不出"]},
+          {n:"咳嗽", k:["咳嗽","咳"]},
+          {n:"痰白而稀", k:["痰白","白痰","痰稀","稀痰"]},
+          {n:"脸面浮肿", k:["浮肿","水肿","面肿","脸肿","目胞肿"]},
+          {n:"小便不利", k:["小便不利","小便少","尿少","小便短少","排尿不畅","溺少"]},
+          {n:"脉浮", k:["脉浮","浮脉"]},
+          {n:"苔薄白", k:["薄白","苔白"]}
+        ],
+        bj:[
+          {n:"风寒袭表", k:["风寒","寒邪","表寒","风寒束表","外感风寒","表证"]},
+          {n:"肺气郁闭、失于宣降", k:["肺气不宣","肺失宣降","肺气郁闭","肺气闭","宣降失常","肺气壅","肺失清肃"]},
+          {n:"肺失通调、水液内停", k:["通调水道","水道","水之上源","水液","水湿内停","水停","肺不布津"]}
+        ],
+        zf:[
+          {n:"辛温解表", k:["辛温解表","解表散寒","发散风寒","疏风散寒","发汗解表","辛温"]},
+          {n:"宣肺平喘", k:["宣肺","平喘","止咳","宣降肺气"]},
+          {n:"利水消肿", k:["利水","消肿","利尿","通利小便"]}
+        ]
+      },
+      /* 写了原文没有的信息、或辨证方向相反，才扣分 */
+      kpBad:{
+        sx:[
+          {n:"汗出", k:["汗出"]},
+          {n:"口渴", k:["口渴","口干"]},
+          {n:"咽痛", k:["咽痛","喉咙痛"]},
+          {n:"痰黄", k:["痰黄","黄痰"]},
+          {n:"舌红/脉数", k:["舌红","脉数","苔黄"]}
+        ],
+        bj:[
+          {n:"风热", k:["风热","热邪","肺热"]},
+          {n:"脾肾阳虚", k:["脾肾阳虚","肾阳虚","阳虚水泛"]},
+          {n:"痰湿（无表证）", k:["痰湿"]}
+        ],
+        zf:[
+          {n:"辛凉/清热", k:["辛凉","清热"]},
+          {n:"温补脾肾", k:["健脾","温肾","补气","温阳"]}
+        ]
+      },
+      /* 逐层提示：只说往哪看，不给答案 */
+      hint:{
+        sx:[
+          "先别写结论。把病人自己说的和医生查到的分开：他觉得冷吗？热吗？出汗了吗？",
+          "医生还查了两样——脉和舌苔。再看他脸上有没有变化。",
+          "还差一条最容易被跳过的：他的小便怎么样？这一条恰恰是本案的钥匙。"
+        ],
+        bj:[
+          "先定病性：畏冷重、无汗、苔薄白——这是寒还是热？病位在表还是在里？",
+          "咳嗽、气喘，说明邪气影响了哪个脏？这个脏的什么功能被憋住了？",
+          "顺一条链想：肺主宣发肃降、通调水道。肺气一闭，水还下得去吗？小便为什么会少？"
+        ],
+        zf:[
+          "治法跟着病机走。有风寒在表，第一步该做什么？",
+          "咳喘是肺气不宣造成的，治肺要让它怎么样？",
+          "水停在里面出不去，最后还得给水找一条出路。"
+        ]
+      },
       pool:["mah","gui","xing","jing","fang","qiang","bai","xi","sheng","su","bo","nbz","sy","jh"],
       need:{ mah:{w:5}, gui:{w:4}, xing:{w:4} },
       ok:{ jing:{w:2}, fang:{w:2}, qiang:{w:1.5}, bai:{w:1}, xi:{w:1}, sheng:{w:1.5}, su:{w:1.5} },
@@ -380,7 +431,7 @@
     }
   ];
 
-  var state = { ci:0, step:0, sx:{}, bj:{}, zf:null, herbs:{}, pair:{}, rel:{}, done:false, score:null, t0:Date.now() };
+  var state = { ci:0, step:0, free:{sx:"",bj:"",zf:""}, hintLv:{sx:0,bj:0,zf:0}, checked:{}, herbs:{}, pair:{}, rel:{}, done:false, score:null, t0:Date.now() };
 
   var $ = function (id) { return document.getElementById(id); };
   var esc = function (s) { return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;"); };
@@ -388,9 +439,55 @@
   function cur(){ return ADV[state.ci]; }
   function pairsOf(c){ return c.pairs || [c.pair]; }
 
+  /* ---------- 自由作答的判分与提示 ---------- */
+  var FREE_MAX = {sx:20, bj:25, zf:15};
+  var FREE_NAME = {sx:"四诊", bj:"病机", zf:"治法"};
+  var FREE_KIND = ["sx","bj","zf"];
+
+  function norm(s){
+    return String(s || "").toLowerCase().replace(/[\s，,。、；;：:（）()【】\[\]"'“”‘’？！!?.]/g, "");
+  }
+
+  // 命中同义词；紧贴"不/无/未/非/没"或"没有/未见"时不算（如"无汗"不算"汗出"）
+  function hitKey(text, k){
+    var NEG2 = ["没有", "并无", "未见", "未闻", "不伴", "不发"];
+    for (var i = 0; i < k.length; i++){
+      var w = norm(k[i]), idx = text.indexOf(w);
+      while (idx >= 0){
+        var p1 = text.charAt(idx - 1), p2 = text.slice(Math.max(0, idx - 2), idx);
+        if (!/[不无未非没]/.test(p1) && NEG2.indexOf(p2) < 0) return true;
+        idx = text.indexOf(w, idx + w.length);
+      }
+    }
+    return false;
+  }
+
+  function freeHits(kind){
+    var t = norm(state.free[kind]), hits = [];
+    cur().kp[kind].forEach(function(p, i){ if (hitKey(t, p.k)) hits.push(i); });
+    return hits;
+  }
+
+  function freeBads(kind){
+    var t = norm(state.free[kind]), out = [];
+    (cur().kpBad[kind] || []).forEach(function(p){ if (hitKey(t, p.k)) out.push(p.n); });
+    return out;
+  }
+
+  function freeScore(kind){
+    var pts = cur().kp[kind], per = FREE_MAX[kind] / pts.length;
+    var hits = freeHits(kind), bads = freeBads(kind);
+    return {
+      kind:kind, hits:hits, bads:bads, total:pts.length, max:FREE_MAX[kind],
+      score: Math.max(0, hits.length * per - bads.length * per)
+    };
+  }
+
   function reset(ci){
     state.ci = ci; state.step = 0;
-    state.sx = {}; state.bj = {}; state.zf = null;
+    state.free = {sx:"", bj:"", zf:""};
+    state.hintLv = {sx:0, bj:0, zf:0};
+    state.checked = {};
     state.herbs = {}; state.pair = {}; state.rel = {};
     state.done = false; state.score = null;
     state.t0 = Date.now();
@@ -429,26 +526,51 @@
   /* ---------- 各步骤面板 ---------- */
   function renderPanel(){
     var c = cur(), p = "";
-    if (state.step === 0){
-      p += '<h3>第一步 · 四诊采集</h3>';
-      p += '<p class="desc">从下列表现中，勾选<b>本案确实存在</b>且支持辨证的条目；本案没有的、与病性相反的，不要选。</p>';
-      p += '<div class="grp"><div class="chips">' + c.sxOpts.map(function(o){
-        return '<button class="chip '+(state.sx[o.id]?'on':'')+'" data-sx="'+o.id+'">'+o.n+'</button>';
-      }).join("") + '</div></div>';
-    }
-    if (state.step === 1){
-      p += '<h3>第二步 · 病因病机分析</h3>';
-      p += '<p class="desc">理清"邪从何来、病位何在、脏腑功能如何失调"。可多选。</p>';
-      p += '<div class="grp"><div class="chips">' + c.bj.map(function(o,i){
-        return '<button class="chip blue '+(state.bj[i]?'on':'')+'" data-bj="'+i+'">'+o.n+'</button>';
-      }).join("") + '</div></div>';
-    }
-    if (state.step === 2){
-      p += '<h3>第三步 · 确立治法</h3>';
-      p += '<p class="desc">治法由病机推出，须与病性（寒热）、病位（表里）相符。单选。</p>';
-      p += '<div class="grp"><div class="chips">' + c.zf.map(function(o,i){
-        return '<button class="chip '+(state.zf===i?'on':'')+'" data-zf="'+i+'">'+o.n+'</button>';
-      }).join("") + '</div></div>';
+    if (state.step < 3){
+      var kind = FREE_KIND[state.step];
+      var title = ["第一步 · 四诊采集", "第二步 · 病因病机分析", "第三步 · 确立治法"][state.step];
+      var desc = [
+        "读原文，把属于四诊（望、闻、问、切）的资料提取出来。用词或短句都行，<b>不要写原文里没有的内容</b>。",
+        "用自己的话写病机：邪从何来、病位何在、脏腑功能怎样失调。写不准没关系，点「检查一下」可以要提示。",
+        "治法由病机推出，须与病性（寒热）、病位（表里）相符。写出你的治法，不必照抄课本原句。"
+      ][state.step];
+      var ph = [
+        "如：畏冷、发热、无汗……",
+        "如：外感风寒，肺气不宣，水道不通……",
+        "如：辛温解表，宣肺……"
+      ][state.step];
+      var fs = freeScore(kind);
+      p += '<h3>'+title+'</h3>';
+      p += '<p class="desc">'+desc+'</p>';
+      p += '<textarea class="free" id="freeBox" data-free="'+kind+'" placeholder="'+ph+'">'+esc(state.free[kind])+'</textarea>';
+      p += '<div class="frow"><button class="btn" data-a="check">检查一下</button>'+
+           '<span class="cnt">'+(state.checked[kind]
+              ? ('已写到 '+fs.hits.length+' / '+fs.total+' 类要点'+(fs.bads.length ? '，另有 '+fs.bads.length+' 处需修正' : ''))
+              : '写完点「检查一下」，它会指出还缺哪一类，但不会直接给答案')+'</span></div>';
+
+      if (state.checked[kind]){
+        p += '<div class="fback">';
+        if (fs.hits.length){
+          p += '<div class="lbl">你已经写到</div><div class="chips">'+
+            fs.hits.map(function(i){ return '<span class="tag ok">'+cur().kp[kind][i].n+'</span>'; }).join("")+'</div>';
+        }
+        if (fs.bads.length){
+          p += '<div class="lbl" style="margin-top:10px">这些与原文或病性不符</div><div class="chips">'+
+            fs.bads.map(function(n){ return '<span class="tag bad">'+n+'</span>'; }).join("")+'</div>';
+        }
+        p += '</div>';
+        if (fs.hits.length < fs.total){
+          var hs = cur().hint[kind], lv = state.hintLv[kind] || 1;
+          p += '<div class="hintbox"><div class="lbl">提示 '+lv+' / '+hs.length+'</div>'+
+               '<p>'+hs[Math.max(0, lv - 1)]+'</p>'+
+               (lv < hs.length
+                  ? '<button class="btn small" data-a="morehint">再给我一点提示</button>'
+                  : '<span class="cnt" style="display:inline-block;margin-top:8px">提示用完了。回到原文再找一遍，或带着这个问题进入下一步。</span>')+
+               '</div>';
+        } else {
+          p += '<div class="hintbox done"><p>要点齐了，可以进入下一步。</p></div>';
+        }
+      }
     }
     if (state.step === 3){
       var n = Object.keys(state.herbs).length;
@@ -482,9 +604,11 @@
 
   function renderActions(){
     var c = cur(), canNext = true, msg = "";
-    if (state.step === 0 && !Object.keys(state.sx).length) { canNext = false; msg = "请至少选择 1 项"; }
-    if (state.step === 1 && !Object.keys(state.bj).length) { canNext = false; msg = "请至少选择 1 项"; }
-    if (state.step === 2 && state.zf === null) { canNext = false; msg = "请选择一种治法"; }
+    if (state.step < 3){
+      var kind0 = FREE_KIND[state.step];
+      if ((state.free[kind0] || "").trim().length < 4) { canNext = false; msg = "先写下你的"+FREE_NAME[kind0]+"判断"; }
+      else if (!freeHits(kind0).length) { canNext = false; msg = "还没写到要点，点「检查一下」看看提示"; }
+    }
     if (state.step === 3){
       if (Object.keys(state.herbs).length < 2) { canNext = false; msg = "至少选 2 味药"; }
     }
@@ -507,38 +631,30 @@
   function computeScore(){
     var c = cur(), s = {}, fb = [];
 
-    // 四诊 20
-    var okN = 0, badN = 0, allOk = 0;
-    c.sxOpts.forEach(function(o){
-      if (o.ok) allOk++;
-      if (state.sx[o.id]) { if (o.ok) okN++; else badN++; }
-    });
-    var sx = Math.max(0, (okN - badN * 0.5) / allOk) * 20;
-    s.sx = sx;
-    var missSx = c.sxOpts.filter(function(o){ return o.ok && !state.sx[o.id]; });
-    if (missSx.length) fb.push({t:"warn", x:"漏取四诊："+missSx.map(function(o){return o.n;}).join("、")});
-    if (badN) fb.push({t:"err", x:"误取（本案无此表现或与病性相反）："+
-      c.sxOpts.filter(function(o){return !o.ok && state.sx[o.id];}).map(function(o){return o.n;}).join("、")});
-    if (!missSx.length && !badN) fb.push({t:"ok", x:"四诊采集完整、无冗余"});
+    // 四诊 20（自由作答，命中要点得分，写入原文没有的信息扣分）
+    var fxs = freeScore("sx");
+    s.sx = fxs.score;
+    var missSx = c.kp.sx.filter(function(p, i){ return fxs.hits.indexOf(i) < 0; });
+    if (missSx.length) fb.push({t:"warn", x:"四诊未写到："+missSx.map(function(p){return p.n;}).join("、")});
+    if (fxs.bads.length) fb.push({t:"err", x:"读案有误（原文没有或与病性相反）："+fxs.bads.join("、")});
+    if (!missSx.length && !fxs.bads.length) fb.push({t:"ok", x:"四诊采集完整、无冗余"});
 
     // 病机 25
-    var okB = 0, badB = 0, allB = 0;
-    c.bj.forEach(function(o,i){
-      if (o.ok) allB++;
-      if (state.bj[i]) { if (o.ok) okB++; else badB++; }
-    });
-    s.bj = Math.max(0, (okB - badB) / allB) * 25;
-    var missB = c.bj.filter(function(o,i){ return o.ok && !state.bj[i]; });
-    var badBList = c.bj.filter(function(o,i){ return !o.ok && state.bj[i]; });
-    if (missB.length) fb.push({t:"warn", x:"未识别的病机："+missB.map(function(o){return o.n;}).join("、")});
-    badBList.forEach(function(o){ fb.push({t:"err", x:"误判「"+o.n+"」："+o.why}); });
-    if (!missB.length && !badBList.length) fb.push({t:"ok", x:"病机分析准确"});
+    var fbj = freeScore("bj");
+    s.bj = fbj.score;
+    var missB = c.kp.bj.filter(function(p, i){ return fbj.hits.indexOf(i) < 0; });
+    if (missB.length) fb.push({t:"warn", x:"病机未写到："+missB.map(function(p){return p.n;}).join("、")});
+    if (fbj.bads.length) fb.push({t:"err", x:"辨证方向有误："+fbj.bads.join("、")+
+      (fbj.bads.indexOf("风热") >= 0 ? "——痰白稀、苔薄白、口不渴，全无热象" : "")});
+    if (!missB.length && !fbj.bads.length) fb.push({t:"ok", x:"病机分析准确"});
 
     // 治法 15
-    s.zf = (state.zf !== null && c.zf[state.zf].ok) ? 15 : 0;
-    fb.push(state.zf !== null && c.zf[state.zf].ok
-      ? {t:"ok", x:"治法正确："+c.zf[state.zf].n}
-      : {t:"err", x:"治法有误，应为「"+c.zf.filter(function(o){return o.ok;})[0].n+"」"});
+    var fzf = freeScore("zf");
+    s.zf = fzf.score;
+    var missZ = c.kp.zf.filter(function(p, i){ return fzf.hits.indexOf(i) < 0; });
+    if (missZ.length) fb.push({t:"warn", x:"治法未写到："+missZ.map(function(p){return p.n;}).join("、")});
+    if (fzf.bads.length) fb.push({t:"err", x:"治法方向有误："+fzf.bads.join("、")});
+    if (!missZ.length && !fzf.bads.length) fb.push({t:"ok", x:"治法与病机相符"});
 
     // 选药 25
     var needW = 0, got = 0;
@@ -582,14 +698,20 @@
     return ("00" + n.toString(36)).slice(-3);
   }
 
+  function maskOf(hits){
+    var m = 0;
+    hits.forEach(function(i){ m |= (1 << i); });
+    return m;
+  }
+
   function encodeCode(){
     var c = cur(), r = state.score, prs = pairsOf(c);
+    var fxs = freeScore("sx"), fbj = freeScore("bj"), fzf = freeScore("zf");
     var payload = {
-      v:1, c:c.id, s:r.total,
+      v:2, c:c.id, s:r.total,
       a:[Math.round(r.s.sx), Math.round(r.s.bj), Math.round(r.s.zf), Math.round(r.s.herb), Math.round(r.s.pair)],
-      x:Object.keys(state.sx).sort().join(","),
-      b:Object.keys(state.bj).map(Number).sort(function(p,q){ return p - q; }).join(","),
-      z:(state.zf === null ? -1 : state.zf),
+      m:[maskOf(fxs.hits), maskOf(fbj.hits), maskOf(fzf.hits)],
+      e:[fxs.bads.length, fbj.bads.length, fzf.bads.length],
       h:Object.keys(state.herbs).sort().join(","),
       q:prs.map(function(pr, i){
         var oi = -1, ri = -1;
@@ -610,7 +732,7 @@
     if (chk3(b64) !== m[2]) return null;
     try {
       var p = JSON.parse(atob(b64.replace(/-/g, "+").replace(/_/g, "/")));
-      return (p && p.v === 1 && typeof p.s === "number" && Array.isArray(p.a)) ? p : null;
+      return (p && p.v === 2 && typeof p.s === "number" && Array.isArray(p.a)) ? p : null;
     } catch (e) { return null; }
   }
 
@@ -665,18 +787,20 @@
         '<td class="n">'+pct(m / maxs[i])+'%</td></tr>';
     }).join("");
 
-    var sxRows = c.sxOpts.map(function(o){
-      var k = rows.filter(function(p){ return ("," + p.x + ",").indexOf("," + o.id + ",") >= 0; }).length;
-      var rate = k / n, cls = o.ok ? (rate < 0.7 ? "hot" : "") : (rate > 0 ? "hot" : "cold");
-      return '<tr><td>'+o.n+'</td><td>'+(o.ok ? "应选" : "不应选")+'</td>'+
-        '<td class="n">'+k+'</td><td class="n '+cls+'">'+pct(rate)+'%</td></tr>';
-    }).join("");
+    // 三个自由作答步骤：各要点全班命中率
+    var kpTable = function(kind, idx){
+      var pts = c.kp[kind];
+      return pts.map(function(p, i){
+        var k = rows.filter(function(r){ return (((r.m && r.m[idx]) || 0) >> i) & 1; }).length;
+        var rate = k / n;
+        return '<tr><td>'+p.n+'</td><td class="n">'+k+'</td>'+
+          '<td class="n '+(rate < 0.6 ? "hot" : "")+'">'+pct(rate)+'%</td></tr>';
+      }).join("");
+    };
 
-    var zfRows = c.zf.map(function(o, i){
-      var k = rows.filter(function(p){ return p.z === i; }).length;
-      return '<tr><td>'+o.n+'</td><td>'+(o.ok ? "正确答案" : "干扰项")+'</td>'+
-        '<td class="n">'+k+'</td><td class="n '+(o.ok ? "" : (k ? "hot" : "cold"))+'">'+pct(k / n)+'%</td></tr>';
-    }).join("");
+    var eCnt = [0, 1, 2].map(function(i){
+      return rows.filter(function(r){ return ((r.e || [])[i] || 0) > 0; }).length;
+    });
 
     var hbRows = c.pool.map(function(id){
       var k = rows.filter(function(p){ return ("," + p.h + ",").indexOf("," + id + ",") >= 0; }).length;
@@ -715,36 +839,39 @@
       '</div>'+
       '<h4 style="font-size:13px;color:var(--zheng);margin:14px 0 6px">五项得分均值</h4>'+
       '<table class="tbl"><tr><th>维度</th><th>均值</th><th>得分率</th></tr>'+dimRows+'</table>'+
-      '<h4 style="font-size:13px;color:var(--zheng);margin:14px 0 6px">四诊 · 各条目选中率</h4>'+
-      '<table class="tbl"><tr><th>条目</th><th>性质</th><th>选中人数</th><th>选中率</th></tr>'+sxRows+'</table>'+
-      '<h4 style="font-size:13px;color:var(--zheng);margin:14px 0 6px">治法 · 分布</h4>'+
-      '<table class="tbl"><tr><th>治法</th><th>性质</th><th>人数</th><th>占比</th></tr>'+zfRows+'</table>'+
+      '<h4 style="font-size:13px;color:var(--zheng);margin:14px 0 6px">四诊 · 各要点命中率</h4>'+
+      '<table class="tbl"><tr><th>要点</th><th>写到人数</th><th>命中率</th></tr>'+kpTable("sx",0)+'</table>'+
+      '<h4 style="font-size:13px;color:var(--zheng);margin:14px 0 6px">病机 · 各要点命中率</h4>'+
+      '<table class="tbl"><tr><th>要点</th><th>写到人数</th><th>命中率</th></tr>'+kpTable("bj",1)+'</table>'+
+      '<h4 style="font-size:13px;color:var(--zheng);margin:14px 0 6px">治法 · 各要点命中率</h4>'+
+      '<table class="tbl"><tr><th>要点</th><th>写到人数</th><th>命中率</th></tr>'+kpTable("zf",2)+'</table>'+
       '<h4 style="font-size:13px;color:var(--zheng);margin:14px 0 6px">选药 · 各药被选比例</h4>'+
       '<table class="tbl"><tr><th>药物</th><th>定位</th><th>人数</th><th>比例</th></tr>'+hbRows+'</table>'+
       '<h4 style="font-size:13px;color:var(--zheng);margin:14px 0 6px">配伍 · 药对判断</h4>'+
       '<table class="tbl"><tr><th>药对</th><th>全对人数</th><th>全对率</th><th>仅关系对</th></tr>'+prRows+'</table>'+
-      '<p class="desc" style="margin-top:4px">红色为需要讲评的集中问题（漏选的核心药、误选的药、集中的错误治法与配伍关系）。</p>';
+      '<p class="desc" style="margin-top:4px">误读/误判人数：四诊 '+eCnt[0]+' 人 · 病机 '+eCnt[1]+' 人 · 治法 '+eCnt[2]+
+      ' 人。红色为全班集中问题，可直接作为讲评切入点。</p>';
   }
 
   function exportCsv(){
     if (!lastRows.length) { alert("请先点击「统计」。"); return; }
     var c = cur();
-    var head = ["序号","总分","四诊","病机","治法","选药","配伍","用时秒","治法选择","已选药物","四诊条目","药对判定"];
+    var head = ["序号","总分","四诊","病机","治法","选药","配伍","用时秒","四诊要点","病机要点","治法要点","已选药物","药对判定"];
     var lines = [head.join(",")];
     lastRows.forEach(function(p, i){
-      var zf = (p.z >= 0 && c.zf[p.z]) ? c.zf[p.z].n : "未选";
+      var pick = function(kind, idx){
+        var mask = (p.m && p.m[idx]) || 0;
+        return c.kp[kind].filter(function(_, k){ return (mask >> k) & 1; }).map(function(q){ return q.n; }).join(" ");
+      };
       var hb = p.h.split(",").filter(Boolean).map(function(id){ return HERB[id] ? HERB[id].n : id; }).join(" ");
-      var sx = p.x.split(",").filter(Boolean).map(function(id){
-        var o = c.sxOpts.filter(function(q){ return q.id === id; })[0];
-        return o ? o.n : id;
-      }).join(" ");
       var pr = (p.q || "").split(";").map(function(seg, k){
         var pair = pairsOf(c)[k];
         if (!pair) return "";
         var ab = seg.split(":"), o = pair.opts[Number(ab[0])];
         return (o ? HERB[o[0]].n + "+" + HERB[o[1]].n : "?") + "/" + (pair.relOpts[Number(ab[1])] || "?");
       }).join(" ; ");
-      var row = [i + 1, p.s, p.a[0], p.a[1], p.a[2], p.a[3], p.a[4], p.t, zf, hb, sx, pr];
+      var row = [i + 1, p.s, p.a[0], p.a[1], p.a[2], p.a[3], p.a[4], p.t,
+                 pick("sx",0), pick("bj",1), pick("zf",2), hb, pr];
       lines.push(row.map(function(x){ return '"' + String(x).replace(/"/g, '""') + '"'; }).join(","));
     });
     var blob = new Blob(["\ufeff" + lines.join("\r\n")], {type:"text/csv;charset=utf-8"});
@@ -801,7 +928,7 @@
         '<h4>鉴别要点</h4><p>'+a.diff+'</p>'+
       '</div>'+
       '<details class="tpl"><summary>教师用：新增医案的字段格式</summary><pre>'+
-      esc("{\n  id:\"a2\", title:\"案名\", src:\"出处\",\n  text:\"病案原文（可用 <em> 标出关键句）\",\n  meta:[\"性别·年龄\",\"季节\"], hint:\"读案提示\",\n  sxOpts:[{id:\"x\", n:\"表现\", ok:true}, ...],\n  bj:[{n:\"病机\", ok:true, why:\"误判时的解释\"}, ...],\n  zf:[{n:\"治法\", ok:true}, ...],\n  pool:[\"mah\",\"gui\",...],\n  need:{ mah:{w:5} }, ok:{ jing:{w:2} },\n  bad:{ bo:{why:\"性凉相悖\"} },\n  pairs:[\n    { opts:[[\"mah\",\"gui\"],[\"mah\",\"xing\"]], ans:\"mah|gui\", rel:\"相须\",\n      relOpts:[\"相须\",\"相使\",\"相畏\",\"相杀\",\"相反\"], meaning:\"...\" }\n  ],\n  analysis:{ bj:\"...\", zf:\"...\", xuanyao:\"选药思路\", diff:\"...\",\n             herb:{ n:\"麻黄\", t:\"性味归经\", g:\"功效\",\n                    rows:[[\"功效\",\"本案对应\",\"配伍\"]] },\n             orig:\"原案辨证与用方\" }\n}")+
+      esc("{\n  id:\"a2\", title:\"案名\", src:\"出处\",\n  text:\"病案原文（可用 <em> 标出关键句）\",\n  meta:[\"性别·年龄\",\"季节\"], hint:\"读案提示\",\n  kp:{                       // 自由作答的判分要点，每组同义词命中任一即算答到\n    sx:[{n:\"要点名\", k:[\"同义词1\",\"同义词2\"]}, ...],\n    bj:[...], zf:[...]\n  },\n  kpBad:{                    // 写错方向才扣分（原文没有 / 辨证相反）\n    sx:[{n:\"汗出\", k:[\"汗出\"]}, ...], bj:[...], zf:[...]\n  },\n  hint:{                     // 逐层提示，只说往哪看，不给答案\n    sx:[\"提示1\",\"提示2\",\"提示3\"], bj:[...], zf:[...]\n  },\n  pool:[\"mah\",\"gui\",...],\n  need:{ mah:{w:5} }, ok:{ jing:{w:2} },\n  bad:{ bo:{why:\"性凉相悖\"} },\n  pairs:[\n    { opts:[[\"mah\",\"gui\"],[\"mah\",\"xing\"]], ans:\"mah|gui\", rel:\"相须\",\n      relOpts:[\"相须\",\"相使\",\"相畏\",\"相杀\",\"相反\"], meaning:\"...\" }\n  ],\n  analysis:{ bj:\"...\", zf:\"...\", xuanyao:\"选药思路\", diff:\"...\",\n             herb:{ n:\"麻黄\", t:\"性味归经\", g:\"功效\",\n                    rows:[[\"功效\",\"本案对应\",\"配伍\"]] },\n             orig:\"原案辨证与用方\" }\n}")+
       '</pre></details>';
 
     $("actions").innerHTML =
@@ -813,19 +940,17 @@
   }
 
   /* ---------- 事件 ---------- */
+  document.addEventListener("input", function (e) {
+    var ta = e.target;
+    if (!ta || !ta.dataset || !ta.dataset.free) return;
+    state.free[ta.dataset.free] = ta.value;
+    renderActions();
+  });
+
   document.addEventListener("click", function (e) {
     var t = e.target;
     var tab = t.closest("[data-ci]");
     if (tab) { reset(Number(tab.dataset.ci)); return; }
-
-    var sx = t.closest("[data-sx]");
-    if (sx) { var k = sx.dataset.sx; state.sx[k] ? delete state.sx[k] : state.sx[k] = 1; renderPanel(); renderActions(); return; }
-
-    var bj = t.closest("[data-bj]");
-    if (bj) { var i = bj.dataset.bj; state.bj[i] ? delete state.bj[i] : state.bj[i] = 1; renderPanel(); renderActions(); return; }
-
-    var zf = t.closest("[data-zf]");
-    if (zf) { state.zf = Number(zf.dataset.zf); renderPanel(); renderActions(); return; }
 
     var hb = t.closest("[data-hb]");
     if (hb) {
@@ -847,6 +972,24 @@
     var a = t.closest("[data-a]");
     if (!a) { if (t.id === "tModal") $("tModal").classList.remove("on"); return; }
     var act = a.dataset.a;
+    if (act === "check"){
+      var box = $("freeBox");
+      if (!box) return;
+      var kind = box.dataset.free;
+      state.free[kind] = box.value;
+      state.checked[kind] = true;
+      if (freeHits(kind).length < cur().kp[kind].length){
+        state.hintLv[kind] = Math.min((state.hintLv[kind] || 0) + 1, cur().hint[kind].length);
+      }
+      renderAll(); $("panel").scrollTop = 0;
+      return;
+    }
+    if (act === "morehint"){
+      var kk = FREE_KIND[state.step];
+      state.hintLv[kk] = Math.min((state.hintLv[kk] || 0) + 1, cur().hint[kk].length);
+      renderPanel();
+      return;
+    }
     if (act === "next") { state.step++; state.done = false; renderAll(); }
     if (act === "prev") { state.step--; state.done = false; renderAll(); }
     if (act === "submit") { state.score = computeScore(); state.done = true; renderAll(); }

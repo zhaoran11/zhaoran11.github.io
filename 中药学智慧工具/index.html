@@ -130,7 +130,7 @@
     <a class="tool" href="解表药/医案分析器.html">
       <span class="tag">进阶 · 读案 → 析机 → 立法 → 选药 → 配伍</span>
       <h3>医案分析 · 理法方药训练</h3>
-      <p>给完整病案原文，学生自主析病机、定治法、选药与配伍，逐项评分讲评；提交后生成答题码，教师可汇总全班答题情况。</p>
+      <p>给完整病案原文，学生手写四诊、病机与治法，答不全会逐层给提示而不直接给答案；再选药、判配伍。提交后生成答题码，教师可汇总全班要点命中情况。</p>
       <div class="go">打开进阶训练</div>
     </a>
   </div>
@@ -199,12 +199,13 @@
   CASES    医案  { complaint, body, tongue, present:[], extra:[], pattern, methods:[], correctMethod, analysis }
 
 进阶医案分析
-  text     病案原文（可用 &lt;em&gt; 标关键句）
-  sxOpts   四诊选项 [{id,n,ok}]        bj  病机 [{n,ok,why}]
-  zf       治法 [{n,ok}]               pool 药物 id 池
-  need     必选药 {id:{w}}             ok  可用非首选 {id:{w}}   bad 相悖 {id:{why}}
+  kp       四诊/病机/治法要点 {sx:[{n,k:[同义词]}], bj:[...], zf:[...]}
+  kpBad    易错信息与相反辨证（写错才扣分）
+  hint     三级提示（只说往哪看，不给答案）
+  pool     药物 id 池                  need 必选药 {id:{w}}   ok 可选   bad 相悖
   pairs    多药对 [{opts,ans,rel,relOpts,meaning}]
   analysis 参考答案 {bj,zf,xuanyao,diff}
+  作答：前三步手写，第四步选药、第五步配伍点选
   评分：四诊20 + 病机25 + 治法15 + 选药25 + 配伍15
   答题码：学生提交后生成，教师用 ?t=1 打开「教师汇总」粘贴统计</div>
 
