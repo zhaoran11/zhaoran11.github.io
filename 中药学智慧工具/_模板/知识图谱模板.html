@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>解表药 · 理法方药知识图谱</title>
+<title>【模板】章节知识图谱 · 中药学</title>
 <style>
   :root{
     --paper:#F8F4EC;
@@ -152,13 +152,24 @@
   </footer>
 </div>
 
-<script src="./echarts.min.js"></script>
+<script src="../lib/echarts.min.js"></script>
 <script>
   if (!window.echarts) {
     document.write('<script src="https://cdn.jsdelivr.net/npm/echarts@5.5.1/dist/echarts.min.js"><\/script>');
   }
 </script>
 <script>
+/* ============================================================
+   中药学章节知识图谱 · 通用模板
+   用法：复制本文件到  ./<章节名>/知识图谱.html
+        然后整块替换下方 RAW / LINKS / INFO 三个数据区（保留其余代码）。
+   数据规范：
+     RAW  [节点] id: { n:显示名, c:分类号, x,y:逻辑坐标, s:大小, shape, step:所在环节1-5 }
+     LINKS[连线] ["起点id", "终点id"]
+     INFO [详情] id: { tags:[标签], rows:[[标题, 内容, 是否标红]] }
+   分类号 c 固定：0=证型 1=治法 2=药(第一组) 3=药(第二组) 4=方剂 5=用药禁忌
+   ★ 换章节时，请同步修改 CATS 里的分类名称与颜色，以及 COLHEAD 的列标题。
+   ============================================================ */
 (function () {
   "use strict";
 

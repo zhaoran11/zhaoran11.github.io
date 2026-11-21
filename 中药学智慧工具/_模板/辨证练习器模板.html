@@ -1,0 +1,695 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>【模板】辨证用药练习器 · 中药学</title>
+<style>
+  :root{
+    --paper:#F8F4EC; --paper-2:#FFFDF8; --ink:#2A2724; --ink-2:#6B6257; --ink-3:#9A8F80;
+    --line:#E2D9CA; --zheng:#A63D40; --fa:#C1882B; --han:#2E6F5E; --re:#4A7C8C;
+    --fang:#4C5680; --ok:#2E6F5E; --warn:#C1882B; --err:#A63D40; --neutral:#8A8072;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;}
+  body{
+    background:radial-gradient(1100px 520px at 10% -10%, #FFFDF7 0%, rgba(255,253,247,0) 60%), var(--paper);
+    color:var(--ink);
+    font-family:"PingFang SC","Microsoft YaHei","Noto Sans SC",system-ui,-apple-system,sans-serif;
+    -webkit-font-smoothing:antialiased;
+    line-height:1.7;
+  }
+  .top{
+    position:sticky; top:0; z-index:20; display:flex; align-items:center; justify-content:space-between;
+    gap:16px; flex-wrap:wrap; padding:14px 28px; background:rgba(248,244,236,.92);
+    border-bottom:1px solid var(--line); backdrop-filter:blur(8px);
+  }
+  .ttl{font-family:"Songti SC","Noto Serif SC","SimSun",serif; font-size:20px; font-weight:700; letter-spacing:1.2px;}
+  .ttl span{font-size:13px; color:var(--ink-3); font-weight:400; letter-spacing:.5px; margin-left:8px;}
+  .nav{display:flex; align-items:center; gap:8px;}
+  .nav button{
+    font-family:inherit; font-size:13px; color:var(--ink-2); background:#fff; border:1px solid var(--line);
+    border-radius:999px; padding:6px 14px; cursor:pointer; transition:.18s;
+  }
+  .nav button:hover{background:#F1EADF;}
+  .nav .counter{font-size:12.5px; color:var(--ink-3); min-width:84px; text-align:center; letter-spacing:.5px;}
+
+  main{
+    max-width:1240px; margin:0 auto; padding:22px 28px 60px;
+    display:grid; grid-template-columns:minmax(0,1fr) 370px; gap:22px; align-items:start;
+  }
+  @media (max-width:1080px){ main{grid-template-columns:1fr;} }
+
+  .card{background:var(--paper-2); border:1px solid var(--line); border-radius:16px; box-shadow:0 6px 22px rgba(90,70,40,.05);}
+
+  .case{padding:20px 22px; margin-bottom:16px;}
+  .case .lbl{font-size:11px; letter-spacing:2px; color:var(--ink-3); margin-bottom:10px;}
+  .case .main-complaint{font-size:16px; font-weight:600; margin-bottom:8px; font-family:"Songti SC","Noto Serif SC",serif;}
+  .case .body{font-size:14px; color:#3C3832; line-height:1.95;}
+  .case .body em{font-style:normal; color:var(--zheng); font-weight:600;}
+
+  .step{margin-bottom:16px; padding:18px 20px;}
+  .step h3{
+    margin:0 0 4px; font-size:14.5px; font-weight:700; display:flex; align-items:center; gap:9px;
+    font-family:"Songti SC","Noto Serif SC",serif; letter-spacing:.5px;
+  }
+  .step h3 .no{
+    width:21px; height:21px; border-radius:50%; background:var(--ink); color:#fff;
+    font-size:11.5px; display:inline-flex; align-items:center; justify-content:center; font-family:inherit;
+  }
+  .step .tip{font-size:12px; color:var(--ink-3); margin:0 0 12px 30px;}
+
+  .chips{display:flex; flex-wrap:wrap; gap:8px;}
+  .chip{
+    font-family:inherit; font-size:13px; color:var(--ink-2); background:#fff; border:1px solid var(--line);
+    border-radius:999px; padding:6px 14px; cursor:pointer; transition:.16s;
+  }
+  .chip:hover{border-color:#C9B99E; background:#FBF6EC;}
+  .chip.on{background:var(--ink); border-color:var(--ink); color:#fff;}
+
+  .opts{display:grid; gap:8px;}
+  .opt{
+    display:flex; align-items:center; gap:10px; text-align:left; width:100%;
+    font-family:inherit; font-size:13.5px; color:var(--ink); background:#fff;
+    border:1px solid var(--line); border-radius:10px; padding:10px 14px; cursor:pointer; transition:.16s;
+  }
+  .opt:hover{border-color:#C9B99E; background:#FBF6EC;}
+  .opt .dot{width:14px; height:14px; border-radius:50%; border:2px solid #CFC4B2; flex:0 0 auto; transition:.16s;}
+  .opt.on{border-color:var(--ink); background:#FBF6EC;}
+  .opt.on .dot{border-color:var(--ink); background:var(--ink); box-shadow:inset 0 0 0 3px #FBF6EC;}
+
+  .herb-grid{display:flex; flex-wrap:wrap; gap:8px;}
+  .herb{
+    font-family:inherit; text-align:left; background:#fff; border:1px solid var(--line);
+    border-radius:12px; padding:8px 12px; cursor:pointer; transition:.16s; min-width:92px;
+  }
+  .herb .n{display:block; font-size:13.5px; font-weight:600; color:var(--ink);}
+  .herb .t{display:block; font-size:11px; color:var(--ink-3); margin-top:1px;}
+  .herb:hover{border-color:#C9B99E; background:#FBF6EC;}
+  .herb.on{background:var(--ink); border-color:var(--ink);}
+  .herb.on .n{color:#fff;}
+  .herb.on .t{color:#CFC4B2;}
+
+  .actions{display:flex; gap:10px; margin-top:4px;}
+  .btn{
+    font-family:inherit; font-size:14px; border-radius:10px; padding:10px 22px; cursor:pointer;
+    border:1px solid var(--line); background:#fff; color:var(--ink-2); transition:.18s;
+  }
+  .btn:hover{background:#F1EADF;}
+  .btn.primary{background:var(--zheng); border-color:var(--zheng); color:#fff; box-shadow:0 6px 16px rgba(166,61,64,.22);}
+  .btn.primary:hover{background:#93353A;}
+
+  .locked .chip,.locked .opt,.locked .herb{pointer-events:none; opacity:.72;}
+
+  aside{position:sticky; top:78px; display:grid; gap:16px;}
+  .score-card{padding:20px 22px;}
+  .score-card .k{font-size:11px; letter-spacing:2px; color:var(--ink-3);}
+  .total{display:flex; align-items:baseline; gap:8px; margin:8px 0 4px;}
+  .total b{font-size:44px; line-height:1; font-family:"Songti SC","Noto Serif SC",serif;}
+  .total i{font-style:normal; font-size:13px; color:var(--ink-3);}
+  .grade{font-size:12.5px; color:var(--ink-2); margin-bottom:14px;}
+  .bars{display:grid; gap:9px;}
+  .bar-row{display:grid; grid-template-columns:58px 1fr 38px; align-items:center; gap:10px; font-size:12.5px; color:var(--ink-2);}
+  .bar{height:6px; border-radius:3px; background:#EFE7DA; overflow:hidden;}
+  .bar i{display:block; height:100%; border-radius:3px; background:var(--zheng); width:0; transition:width .5s ease;}
+  .bar-row .v{text-align:right; color:var(--ink-3); font-variant-numeric:tabular-nums;}
+
+  .analysis{padding:18px 22px; font-size:13px; color:#3C3832;}
+  .analysis h4{margin:0 0 8px; font-size:12px; letter-spacing:1.5px; color:var(--ink-3); font-weight:600;}
+  .analysis .formula{
+    display:inline-block; margin:2px 0 10px; padding:3px 10px; border-radius:6px;
+    background:#EEF2F8; color:var(--fang); font-weight:600; font-size:13px;
+  }
+  .analysis p{margin:0 0 10px;}
+  .analysis .warn{
+    margin-top:10px; padding:9px 12px; border-radius:8px; background:#FBF0EE; color:#8A4A3E; font-size:12.5px;
+    border-left:3px solid var(--err);
+  }
+  .placeholder{color:var(--ink-3); font-size:13px; line-height:1.9;}
+  .placeholder b{color:var(--ink-2);}
+
+  .fb-list{display:grid; gap:6px; margin-top:12px;}
+  .fb{display:flex; gap:8px; font-size:12.5px; align-items:flex-start;}
+  .fb .ic{width:16px; height:16px; border-radius:50%; flex:0 0 auto; margin-top:3px; font-size:10px; color:#fff; display:flex; align-items:center; justify-content:center;}
+  .fb.ok .ic{background:var(--ok);} .fb.warn .ic{background:var(--warn);}
+  .fb.err .ic{background:var(--err);} .fb.neutral .ic{background:var(--neutral);}
+  .fb .tx{color:#4A443C;}
+
+  .cand{margin-top:12px; display:grid; gap:8px;}
+  .cand-row{display:grid; grid-template-columns:1fr 40px; gap:6px 10px; align-items:center;}
+  .cand-row .nm{font-size:13px; color:var(--ink);}
+  .cand-row .sc{font-size:12px; color:var(--ink-3); text-align:right; font-variant-numeric:tabular-nums;}
+  .cand-row .track{grid-column:1 / -1; height:5px; background:#EFE7DA; border-radius:3px; overflow:hidden;}
+  .cand-row .track i{display:block; height:100%; background:var(--fa); border-radius:3px; transition:width .45s ease;}
+  .cand-row.top .nm{font-weight:700; color:var(--zheng);}
+  .cand-row.top .track i{background:var(--zheng);}
+  .reason{font-size:11.5px; color:var(--ink-3); grid-column:1 / -1; margin-top:-2px;}
+
+  .drawer{
+    position:fixed; inset:0; background:rgba(40,33,24,.42); z-index:60; display:none;
+    align-items:center; justify-content:center; padding:24px;
+  }
+  .drawer.open{display:flex;}
+  .drawer .box{
+    background:var(--paper-2); border-radius:14px; width:min(820px,100%); max-height:82vh;
+    display:flex; flex-direction:column; overflow:hidden; box-shadow:0 24px 60px rgba(30,20,10,.3);
+  }
+  .drawer .hd{display:flex; justify-content:space-between; align-items:center; padding:16px 20px; border-bottom:1px solid var(--line);}
+  .drawer .hd b{font-size:14px;}
+  .drawer .hd button{border:none; background:none; font-size:20px; cursor:pointer; color:var(--ink-3); line-height:1;}
+  .drawer pre{
+    margin:0; padding:18px 20px; overflow:auto; font-size:12px; line-height:1.65;
+    font-family:"SF Mono",Menlo,Consolas,monospace; color:#3C3832; background:#FDFBF6;
+  }
+  .drawer .note{padding:12px 20px; font-size:11.5px; color:var(--ink-3); border-top:1px solid var(--line);}
+</style>
+</head>
+<body>
+
+<div class="top">
+  <div class="ttl">辨证用药练习器<span>中药学 · 解表药</span></div>
+  <div class="nav">
+    <button id="prev">上一例</button>
+    <span class="counter" id="counter">病例 1 / 6</span>
+    <button id="next">下一例</button>
+    <button id="ruleBtn">查看规则库</button>
+  </div>
+</div>
+
+<main>
+  <div class="work" id="work">
+    <article class="card case" id="case"></article>
+
+    <section class="card step">
+      <h3><span class="no">1</span>四诊采集</h3>
+      <p class="tip">从下列症状中选出本案<b>实际存在</b>的四诊信息（含舌脉），多选或漏选都会影响得分。</p>
+      <div class="chips" id="chips"></div>
+    </section>
+
+    <section class="card step">
+      <h3><span class="no">2</span>辨证</h3>
+      <p class="tip">点“开始辨证”，系统按规则库给出证型候选及命中依据。</p>
+      <button class="btn" id="diagBtn">开始辨证</button>
+      <div class="cand" id="cand"></div>
+    </section>
+
+    <section class="card step">
+      <h3><span class="no">3</span>立法</h3>
+      <p class="tip">根据证型选择相应治法。</p>
+      <div class="opts" id="methods"></div>
+    </section>
+
+    <section class="card step">
+      <h3><span class="no">4</span>选药</h3>
+      <p class="tip">选择 2–4 味最适宜的药物。</p>
+      <div class="herb-grid" id="herbs"></div>
+    </section>
+
+    <div class="actions">
+      <button class="btn primary" id="submit">提交作答</button>
+      <button class="btn" id="retry">重做本例</button>
+    </div>
+  </div>
+
+  <aside>
+    <div class="card score-card">
+      <div class="k">本次得分</div>
+      <div class="total"><b id="scoreNum">—</b><i>/ 100</i></div>
+      <div class="grade" id="grade">完成四步后提交，查看评分与解析</div>
+      <div class="bars" id="bars"></div>
+    </div>
+    <div class="card analysis" id="analysis">
+      <h4>解析</h4>
+      <div class="placeholder">
+        完成“四诊采集 → 辨证 → 立法 → 选药”后提交，这里会给出<b>证型依据</b>、<b>推荐方剂</b>与<b>用药禁忌</b>。
+      </div>
+    </div>
+  </aside>
+</main>
+
+<div class="drawer" id="drawer">
+  <div class="box">
+    <div class="hd"><b>规则库（纯数据，可直接修改口径）</b><button id="closeDrawer">×</button></div>
+    <pre id="rulePre"></pre>
+    <div class="note">证型判定 = 必要条件命中率 × 65 + 或然条件命中率 × 35 − 矛盾症状惩罚。教师可按本校教材增删证型、症状权重与核心药物。</div>
+  </div>
+</div>
+
+<script>
+/* DATA-START */
+  var SYM = [
+    { id: "han_zhong", n: "恶寒重" },
+    { id: "han_qing",  n: "恶寒轻 / 恶风" },
+    { id: "re_zhong",  n: "发热重" },
+    { id: "re_qing",   n: "发热轻 / 身热不甚" },
+    { id: "wu_han",    n: "无汗" },
+    { id: "you_han",   n: "汗出" },
+    { id: "tou_tong",  n: "头痛" },
+    { id: "shen_tong", n: "身痛" },
+    { id: "shen_zhong",n: "肢体酸重疼痛" },
+    { id: "bi_sai",    n: "鼻塞流清涕" },
+    { id: "yan_tong",  n: "咽喉红肿疼痛" },
+    { id: "ke_bai",    n: "咳嗽痰白稀" },
+    { id: "ke_huang",  n: "咳嗽痰黄" },
+    { id: "kou_ke",    n: "口渴" },
+    { id: "mu_tong",   n: "目疼鼻干" },
+    { id: "tai_bai",   n: "苔薄白 / 白腻" },
+    { id: "tai_huang", n: "苔薄黄" },
+    { id: "mai_jin",   n: "脉浮紧" },
+    { id: "mai_huan",  n: "脉浮缓" },
+    { id: "mai_shu",   n: "脉浮数" }
+  ];
+
+  var PATTERNS = [
+    {
+      id: "fh_shi", name: "风寒表实证", branch: "han",
+      must:    { wu_han: 3, han_zhong: 3, mai_jin: 2 },
+      like:    { re_qing: 1, tou_tong: 1, shen_tong: 1, bi_sai: 1, ke_bai: 1, tai_bai: 1 },
+      against: { yan_tong: 2, kou_ke: 2, tai_huang: 2, mai_shu: 2, you_han: 1 },
+      core: ["mh", "gz", "jj", "ff"], formula: "麻黄汤"
+    },
+    {
+      id: "fh_xu", name: "风寒表虚证（营卫不和）", branch: "han",
+      must:    { you_han: 3, mai_huan: 3, han_qing: 2 },
+      like:    { tou_tong: 1, re_qing: 1, bi_sai: 1, tai_bai: 1, ke_bai: 1 },
+      against: { wu_han: 2, mai_jin: 2, yan_tong: 2, kou_ke: 1 },
+      core: ["gz", "jj", "ff"], formula: "桂枝汤"
+    },
+    {
+      id: "fr", name: "风热表证", branch: "re",
+      must:    { yan_tong: 3, re_zhong: 2, mai_shu: 3 },
+      like:    { han_qing: 1, kou_ke: 1, ke_huang: 1, tai_huang: 1, tou_tong: 1, you_han: 1 },
+      against: { han_zhong: 2, wu_han: 2, mai_jin: 2, ke_bai: 1, tai_bai: 2 },
+      core: ["bh", "nbz"], formula: "银翘散"
+    },
+    {
+      id: "fh_shi_shi", name: "风寒夹湿", branch: "han",
+      must:    { shen_zhong: 3, han_zhong: 2, mai_jin: 2 },
+      like:    { tou_tong: 1, bi_sai: 1, wu_han: 1, tai_bai: 1 },
+      against: { yan_tong: 2, kou_ke: 1, tai_huang: 2, mai_shu: 2 },
+      core: ["qh", "bzhi", "xx"], formula: "九味羌活汤"
+    },
+    {
+      id: "fr_ke", name: "风热犯肺（表热轻证）", branch: "re",
+      must:    { ke_huang: 3, re_qing: 2, mai_shu: 2 },
+      like:    { yan_tong: 1, tai_huang: 2, you_han: 1, kou_ke: 1 },
+      against: { ke_bai: 2, han_zhong: 2, wu_han: 1, mai_jin: 2, tai_bai: 1 },
+      core: ["sy", "jh", "bh"], formula: "桑菊饮"
+    },
+    {
+      id: "fh_hua_re", name: "表寒郁热（外感风寒，郁而化热）", branch: "han",
+      must:    { mu_tong: 3, re_zhong: 2, mai_shu: 1 },
+      like:    { han_qing: 1, shen_zhong: 1, kou_ke: 1, tai_huang: 1 },
+      against: { han_zhong: 2, mai_jin: 1, ke_bai: 1 },
+      core: ["gg", "ch"], formula: "柴葛解肌汤"
+    }
+  ];
+
+  var HERBS = {
+    mh:   { n: "麻黄",   t: "辛微苦温", b: "han", core: ["fh_shi"],               bad: { fh_xu: "表虚自汗、阴虚盗汗者忌用" } },
+    gz:   { n: "桂枝",   t: "辛甘温",   b: "han", core: ["fh_shi", "fh_xu"] },
+    jj:   { n: "荆芥",   t: "辛微温",   b: "han", core: ["fh_shi", "fh_xu", "fr"] },
+    ff:   { n: "防风",   t: "辛甘微温", b: "han", core: ["fh_shi", "fh_xu", "fh_shi_shi"] },
+    qh:   { n: "羌活",   t: "辛苦温",   b: "han", core: ["fh_shi_shi"] },
+    bzhi: { n: "白芷",   t: "辛温",     b: "han", core: ["fh_shi_shi", "fh_hua_re"] },
+    xx:   { n: "细辛",   t: "辛温有小毒", b: "han", core: ["fh_shi_shi"], warn: "用量不宜过大（“细辛不过钱”），反藜芦" },
+    bh:   { n: "薄荷",   t: "辛凉",     b: "re",  core: ["fr", "fr_ke"] },
+    nbz:  { n: "牛蒡子", t: "辛苦寒",   b: "re",  core: ["fr", "fr_ke"] },
+    sy:   { n: "桑叶",   t: "苦甘寒",   b: "re",  core: ["fr_ke"] },
+    jh:   { n: "菊花",   t: "辛甘苦微寒", b: "re", core: ["fr_ke"] },
+    gg:   { n: "葛根",   t: "甘辛凉",   b: "re",  core: ["fh_hua_re"] },
+    ch:   { n: "柴胡",   t: "苦辛微寒", b: "re",  core: ["fh_hua_re"] }
+  };
+
+  var HERB_ORDER = ["mh", "gz", "jj", "ff", "qh", "bzhi", "xx", "bh", "nbz", "sy", "jh", "gg", "ch"];
+
+  var CASES = [
+    {
+      complaint: "恶寒发热 2 天，无汗。",
+      body: "患者，男，28 岁。2 天前受凉后出现<em>恶寒重</em>、发热轻，<em>无汗</em>，头痛，身痛，鼻塞流清涕，咳嗽痰白稀。",
+      tongue: "舌淡红，苔薄白，脉浮紧。",
+      present: ["han_zhong", "re_qing", "wu_han", "tou_tong", "shen_tong", "bi_sai", "ke_bai", "tai_bai", "mai_jin"],
+      extra:   ["yan_tong", "kou_ke", "mai_shu", "tai_huang"],
+      pattern: "fh_shi",
+      methods: ["辛温解表，宣肺散寒", "辛凉透表，清热解毒", "解肌发表，调和营卫", "疏风清热，宣肺止咳"],
+      correctMethod: 0,
+      analysis: "恶寒重、无汗、脉浮紧，为风寒束表、卫阳被遏之表实证。治当辛温发汗；麻黄发汗力最强且能宣肺平喘，配桂枝助其发汗，即麻黄汤。注意：表虚自汗者禁用麻黄。"
+    },
+    {
+      complaint: "头痛发热，汗出恶风 1 天。",
+      body: "患者，女，35 岁。昨日受风后<em>头痛</em>、发热，<em>汗出</em>，<em>恶风</em>（恶寒轻），鼻塞。",
+      tongue: "苔薄白，脉浮缓。",
+      present: ["you_han", "han_qing", "re_qing", "tou_tong", "bi_sai", "tai_bai", "mai_huan"],
+      extra:   ["wu_han", "mai_jin", "yan_tong", "kou_ke", "ke_huang"],
+      pattern: "fh_xu",
+      methods: ["辛温发汗，宣肺平喘", "解肌发表，调和营卫", "辛凉透表，清热解毒", "发汗祛湿，兼清里热"],
+      correctMethod: 1,
+      analysis: "汗出、恶风、脉浮缓，为风寒袭表、营卫不和之表虚证。治当解肌发表、调和营卫，以桂枝汤。既已有汗，不可再用麻黄峻汗，以免伤阳耗气。"
+    },
+    {
+      complaint: "发热 1 天，咽喉疼痛。",
+      body: "患者，女，22 岁。发热<em>重</em>，微恶寒，汗出不畅，头痛，<em>咽喉红肿疼痛</em>，口渴，咳嗽痰黄。",
+      tongue: "苔薄黄，脉浮数。",
+      present: ["re_zhong", "han_qing", "you_han", "tou_tong", "yan_tong", "kou_ke", "ke_huang", "tai_huang", "mai_shu"],
+      extra:   ["han_zhong", "wu_han", "mai_jin", "bi_sai"],
+      pattern: "fr",
+      methods: ["辛温解表，宣肺散寒", "解肌发表，调和营卫", "辛凉透表，清热解毒", "疏风清热，宣肺止咳"],
+      correctMethod: 2,
+      analysis: "发热重、咽痛、脉浮数，为风热犯表。治当辛凉透表、清热解毒，银翘散主之；薄荷、牛蒡子疏散风热、利咽透疹，为方中要药。"
+    },
+    {
+      complaint: "恶寒发热，头身重痛 3 天。",
+      body: "患者，男，41 岁。冒雨后感<em>恶寒重</em>，<em>无汗</em>，头痛，<em>肢体酸重疼痛</em>，鼻塞。",
+      tongue: "苔白腻，脉浮紧。",
+      present: ["han_zhong", "wu_han", "tou_tong", "shen_zhong", "bi_sai", "tai_bai", "mai_jin"],
+      extra:   ["yan_tong", "kou_ke", "mai_shu", "ke_huang"],
+      pattern: "fh_shi_shi",
+      methods: ["辛凉透表，清热解毒", "发汗祛湿，兼清里热", "解肌发表，调和营卫", "解肌清热"],
+      correctMethod: 1,
+      analysis: "恶寒重、无汗而头身重痛、苔白腻，为风寒夹湿。治当发汗祛湿，九味羌活汤主之；羌活善治上半身风寒湿痹，细辛止痛但有毒，用量宜轻。"
+    },
+    {
+      complaint: "咳嗽 2 天，身热不甚。",
+      body: "患者，女，19 岁。咳嗽 2 天，<em>痰黄黏</em>，口微渴，咽微痛，<em>身热不甚</em>，汗出。",
+      tongue: "苔薄黄，脉浮数。",
+      present: ["ke_huang", "re_qing", "kou_ke", "yan_tong", "you_han", "tai_huang", "mai_shu"],
+      extra:   ["han_zhong", "wu_han", "mai_jin", "ke_bai"],
+      pattern: "fr_ke",
+      methods: ["辛温解表，宣肺散寒", "辛凉透表，清热解毒", "疏风清热，宣肺止咳", "解肌清热"],
+      correctMethod: 2,
+      analysis: "以咳嗽为主、身热不甚、口微渴，为风热犯肺之表热轻证。治当疏风清热、宣肺止咳，桑菊饮主之；桑叶、菊花轻清宣散，不似银翘散之重在解毒。"
+    },
+    {
+      complaint: "恶寒发热 3 天，目疼鼻干。",
+      body: "患者，男，33 岁。外感 3 天，<em>恶寒渐轻</em>，<em>身热增盛</em>，无汗，头痛，<em>目疼鼻干</em>，心烦，口渴。",
+      tongue: "苔薄黄，脉浮微洪。",
+      present: ["han_qing", "re_zhong", "wu_han", "tou_tong", "mu_tong", "kou_ke", "tai_huang", "mai_shu"],
+      extra:   ["bi_sai", "ke_bai", "mai_jin", "han_zhong"],
+      pattern: "fh_hua_re",
+      methods: ["辛温发汗，宣肺平喘", "疏风清热，宣肺止咳", "解肌清热", "辛凉透表，清热解毒"],
+      correctMethod: 2,
+      analysis: "恶寒渐轻、身热增盛、目疼鼻干，为外感风寒、郁而化热。治当解肌清热，柴葛解肌汤主之；葛根解肌退热，柴胡透解邪热，佐黄芩、石膏清里热。"
+    }
+  ];
+/* DATA-END */
+
+  /* ============================================================
+   辨证用药练习器 · 通用模板
+   用法：复制本文件到  ./<章节名>/辨证练习器.html，替换下方四个数据区。
+   SYM      症状词表  [{ id, n }]
+   PATTERNS 证型规则  [{ id, name, branch, must, like, against, core, formula }]
+            must / like / against 均为 { 症状id: 权重 }
+            branch 取 "han"(偏温) 或 "re"(偏凉)，用于判断选药是否性味相反
+            core   为核心药物 id 数组
+   HERBS    药物      { id: { n:名, t:性味, b:分支, core:[证型id], bad:{证型id:原因}, warn:提示 } }
+   CASES    医案      [{ complaint, body, tongue, present:[], extra:[],
+                         pattern, methods:[], correctMethod, analysis }]
+   ============================================================ */
+var state = { idx: 0, sel: new Set(), cands: [], method: null, herbs: new Set(), done: false };
+
+  var $ = function (id) { return document.getElementById(id); };
+
+  function esc(s) { return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;"); }
+
+  function symName(id) {
+    for (var i = 0; i < SYM.length; i++) if (SYM[i].id === id) return SYM[i].n;
+    return id;
+  }
+  function patById(id) {
+    for (var i = 0; i < PATTERNS.length; i++) if (PATTERNS[i].id === id) return PATTERNS[i];
+    return null;
+  }
+
+  function renderCase() {
+    var c = CASES[state.idx];
+    $("case").innerHTML =
+      '<div class="lbl">病例 ' + (state.idx + 1) + '</div>' +
+      '<div class="main-complaint">主诉：' + c.complaint + '</div>' +
+      '<div class="body">' + c.body + '<br/>' + c.tongue + '</div>';
+  }
+
+  function renderChips() {
+    var c = CASES[state.idx];
+    var pool = c.present.concat(c.extra);
+    var html = pool.map(function (id) {
+      var on = state.sel.has(id) ? " on" : "";
+      return '<button class="chip' + on + '" data-s="' + id + '">' + esc(symName(id)) + '</button>';
+    }).join("");
+    $("chips").innerHTML = html;
+  }
+
+  function renderMethods() {
+    var c = CASES[state.idx];
+    $("methods").innerHTML = c.methods.map(function (m, i) {
+      var on = state.method === i ? " on" : "";
+      return '<button class="opt' + on + '" data-m="' + i + '"><span class="dot"></span>' + esc(m) + '</button>';
+    }).join("");
+  }
+
+  function renderHerbs() {
+    $("herbs").innerHTML = HERB_ORDER.map(function (id) {
+      var h = HERBS[id];
+      var on = state.herbs.has(id) ? " on" : "";
+      return '<button class="herb' + on + '" data-h="' + id + '">' +
+             '<span class="n">' + h.n + '</span><span class="t">' + h.t + '</span></button>';
+    }).join("");
+  }
+
+  function renderAll() {
+    state.done = false;
+    $("work").classList.remove("locked");
+    renderCase();
+    renderChips();
+    renderMethods();
+    renderHerbs();
+    $("cand").innerHTML = "";
+    $("counter").textContent = "病例 " + (state.idx + 1) + " / " + CASES.length;
+    resetSide();
+  }
+
+  function resetSide() {
+    $("scoreNum").textContent = "—";
+    $("grade").textContent = "完成四步后提交，查看评分与解析";
+    $("bars").innerHTML = "";
+    $("analysis").innerHTML =
+      '<h4>解析</h4><div class="placeholder">完成“四诊采集 → 辨证 → 立法 → 选药”后提交，' +
+      '这里会给出<b>证型依据</b>、<b>推荐方剂</b>与<b>用药禁忌</b>。</div>';
+  }
+
+  function computeCandidates(sel) {
+    return PATTERNS.map(function (p) {
+      var mh = 0, mt = 0, lh = 0, lt = 0, ag = 0;
+      for (var k in p.must) { mt += p.must[k]; if (sel.has(k)) mh += p.must[k]; }
+      for (var k2 in p.like) { lt += p.like[k2]; if (sel.has(k2)) lh += p.like[k2]; }
+      for (var k3 in p.against) { if (sel.has(k3)) ag += p.against[k3]; }
+      var base = (mt ? mh / mt * 65 : 0) + (lt ? lh / lt * 35 : 0) - ag * 6;
+      var score = Math.max(0, Math.min(100, Math.round(base)));
+      return { p: p, score: score, mh: mh, mt: mt };
+    }).sort(function (a, b) { return b.score - a.score; });
+  }
+
+  function showCandidates() {
+    if (!state.sel.size) {
+      state.cands = [];
+      $("cand").innerHTML = '<div class="placeholder">请先在上一步选择四诊信息。</div>';
+      return;
+    }
+    var cands = computeCandidates(state.sel);
+    state.cands = cands;
+    var top = cands.slice(0, 3);
+    var html = top.map(function (x, i) {
+      var hit = top[i].p.must ? "" : "";
+      var reason = "必要条件命中 " + x.mh + "/" + x.mt;
+      return '<div class="cand-row' + (i === 0 ? " top" : "") + '">' +
+             '<span class="nm">' + esc(x.p.name) + '</span>' +
+             '<span class="sc">' + x.score + '</span>' +
+             '<span class="track"><i style="width:' + x.score + '%"></i></span>' +
+             '<span class="reason">' + reason + '</span></div>';
+    }).join("");
+    $("cand").innerHTML = html || '<div class="placeholder">请先选择四诊信息。</div>';
+  }
+
+  function judgeHerbs(p) {
+    var res = { coreTotal: p.core.length, coreHit: 0, wrong: [], taboo: [], neutral: [], good: [] };
+    state.herbs.forEach(function (id) {
+      var h = HERBS[id];
+      if (p.core.indexOf(id) >= 0) { res.coreHit++; res.good.push(id); }
+      else if (h.bad && h.bad[p.id]) { res.taboo.push(id); }
+      else if (h.b !== p.branch) { res.wrong.push(id); }
+      else { res.neutral.push(id); }
+    });
+    return res;
+  }
+
+  function submit() {
+    var c = CASES[state.idx];
+    var p = patById(c.pattern);
+
+    // 四诊 20 分（F1）
+    var present = {};
+    c.present.forEach(function (k) { present[k] = true; });
+    var hit = 0;
+    state.sel.forEach(function (k) { if (present[k]) hit++; });
+    var precision = state.sel.size ? hit / state.sel.size : 0;
+    var recall = hit / c.present.length;
+    var f1 = (precision + recall) ? 2 * precision * recall / (precision + recall) : 0;
+    var s4 = Math.round(f1 * 20);
+
+    // 辨证 30 分
+    var cands = computeCandidates(state.sel);
+    var isTop1 = cands[0].p.id === p.id;
+    var inTop2 = cands.slice(0, 2).some(function (x) { return x.p.id === p.id; });
+    var sdx = state.sel.size < 3 ? 0 : (isTop1 ? 30 : (inTop2 ? 15 : 0));
+
+    // 立法 20 分
+    var sm = state.method === c.correctMethod ? 20 : 0;
+
+    // 选药 30 分
+    var j = judgeHerbs(p);
+    var coreRate = j.coreTotal ? j.coreHit / j.coreTotal : 0;
+    var clean = (j.wrong.length === 0 && j.taboo.length === 0);
+    var sHerb = Math.round(Math.max(0, Math.min(30, coreRate * 20 + (clean ? 10 : 0) - j.taboo.length * 5)));
+
+    var total = s4 + sdx + sm + sHerb;
+
+    // 侧栏
+    $("scoreNum").textContent = total;
+    var grade = total >= 90 ? "优秀：辨证与用药思路清晰" :
+                total >= 75 ? "良好：要点基本掌握，细节可再打磨" :
+                total >= 60 ? "合格：核心环节仍需巩固" : "需加强：请对照解析重做本例";
+    $("grade").textContent = grade;
+
+    var rows = [
+      ["四诊", s4, 20], ["辨证", sdx, 30], ["立法", sm, 20], ["选药", sHerb, 30]
+    ];
+    $("bars").innerHTML = rows.map(function (r) {
+      return '<div class="bar-row"><span>' + r[0] + '</span>' +
+             '<span class="bar"><i style="width:' + (r[1] / r[2] * 100) + '%"></i></span>' +
+             '<span class="v">' + r[1] + "/" + r[2] + '</span></div>';
+    }).join("");
+
+    // 反馈明细
+    var miss = c.present.filter(function (k) { return !state.sel.has(k); });
+    var falsePos = [];
+    state.sel.forEach(function (k) { if (!present[k]) falsePos.push(k); });
+
+    var fb = [];
+    if (miss.length) fb.push({ t: "err", x: "漏选四诊：" + miss.map(symName).join("、") });
+    if (falsePos.length) fb.push({ t: "err", x: "多选（本案无）：" + falsePos.map(symName).join("、") });
+    if (!miss.length && !falsePos.length) fb.push({ t: "ok", x: "四诊采集完整、无冗余" });
+
+    fb.push({
+      t: state.sel.size < 3 ? "err" : (isTop1 ? "ok" : (inTop2 ? "warn" : "err")),
+      x: state.sel.size < 3 ? "辨证：四诊信息不足，诊断不能成立" :
+         "辨证：" + (isTop1 ? "首选正确——" : (inTop2 ? "次选命中——" : "未命中——")) +
+         "本题应为「" + p.name + "」"
+    });
+    fb.push({
+      t: sm ? "ok" : "err",
+      x: "立法：" + (sm ? "正确" : "应为「" + c.methods[c.correctMethod] + "」")
+    });
+
+    j.good.forEach(function (id) {
+      fb.push({ t: "ok", x: "选药：" + HERBS[id].n + "——首选药，切中证型" });
+    });
+    j.neutral.forEach(function (id) {
+      fb.push({ t: "neutral", x: "选药：" + HERBS[id].n + "——同属一类，可用但非首选" });
+    });
+    j.wrong.forEach(function (id) {
+      fb.push({ t: "err", x: "选药：" + HERBS[id].n + "——性味与证型相反（" + HERBS[id].t + "）" });
+    });
+    j.taboo.forEach(function (id) {
+      fb.push({ t: "err", x: "选药：" + HERBS[id].n + "——禁忌！" + HERBS[id].bad[p.id] });
+    });
+
+    // 解析
+    var warnHtml = "";
+    var warns = [];
+    j.taboo.forEach(function (id) { warns.push(HERBS[id].n + "：" + HERBS[id].bad[p.id]); });
+    state.herbs.forEach(function (id) {
+      if (HERBS[id].warn) warns.push(HERBS[id].n + "：" + HERBS[id].warn);
+    });
+    if (warns.length) {
+      warnHtml = '<div class="warn">用药安全提示<br/>' + warns.map(esc).join("<br/>") + '</div>';
+    }
+
+    $("analysis").innerHTML =
+      '<h4>解析 · ' + esc(p.name) + '</h4>' +
+      '<div class="formula">推荐方剂：' + esc(p.formula) + '</div>' +
+      '<p>' + c.analysis + '</p>' +
+      '<div class="fb-list">' + fb.map(function (f) {
+        return '<div class="fb ' + f.t + '"><span class="ic">' +
+               (f.t === "ok" ? "✓" : (f.t === "err" ? "✕" : (f.t === "warn" ? "!" : "·"))) +
+               '</span><span class="tx">' + esc(f.x) + '</span></div>';
+      }).join("") + '</div>' + warnHtml;
+
+    state.done = true;
+    $("work").classList.add("locked");
+    showCandidates();
+  }
+
+  // 事件绑定
+  $("chips").addEventListener("click", function (e) {
+    var b = e.target.closest("[data-s]");
+    if (!b || state.done) return;
+    var id = b.getAttribute("data-s");
+    if (state.sel.has(id)) state.sel.delete(id); else state.sel.add(id);
+    b.classList.toggle("on");
+  });
+
+  $("methods").addEventListener("click", function (e) {
+    var b = e.target.closest("[data-m]");
+    if (!b || state.done) return;
+    state.method = Number(b.getAttribute("data-m"));
+    renderMethods();
+  });
+
+  $("herbs").addEventListener("click", function (e) {
+    var b = e.target.closest("[data-h]");
+    if (!b || state.done) return;
+    var id = b.getAttribute("data-h");
+    if (state.herbs.has(id)) state.herbs.delete(id); else state.herbs.add(id);
+    b.classList.toggle("on");
+  });
+
+  $("diagBtn").addEventListener("click", showCandidates);
+  $("submit").addEventListener("click", submit);
+
+  $("retry").addEventListener("click", function () {
+    state.sel = new Set();
+    state.method = null;
+    state.herbs = new Set();
+    state.cands = [];
+    renderAll();
+  });
+
+  $("prev").addEventListener("click", function () {
+    state.idx = (state.idx - 1 + CASES.length) % CASES.length;
+    $("retry").click();
+  });
+  $("next").addEventListener("click", function () {
+    state.idx = (state.idx + 1) % CASES.length;
+    $("retry").click();
+  });
+
+  $("ruleBtn").addEventListener("click", function () {
+    var dump = {
+      说明: "证型判定 = 必要条件命中率×65 + 或然条件×35 - 矛盾症状惩罚；核心药物按证型配置",
+      症状: SYM,
+      证型规则: PATTERNS,
+      药物: HERBS
+    };
+    $("rulePre").textContent = JSON.stringify(dump, null, 2);
+    $("drawer").classList.add("open");
+  });
+  $("closeDrawer").addEventListener("click", function () {
+    $("drawer").classList.remove("open");
+  });
+  $("drawer").addEventListener("click", function (e) {
+    if (e.target === this) this.classList.remove("open");
+  });
+
+  renderAll();
+</script>
+</body>
+</html>

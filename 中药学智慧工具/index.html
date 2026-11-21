@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>中药学智慧工具 · 总入口</title>
+<style>
+  :root{
+    --paper:#F8F4EC; --paper-2:#FFFDF8; --ink:#2A2724; --ink-2:#6B6257; --ink-3:#9A8F80;
+    --line:#E2D9CA; --zheng:#A63D40; --fa:#C1882B; --han:#2E6F5E; --re:#4A7C8C;
+    --fang:#4C5680; --ok:#2E6F5E;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;}
+  body{
+    background:radial-gradient(1100px 520px at 12% -8%, #FFFDF7 0%, rgba(255,253,247,0) 60%), var(--paper);
+    color:var(--ink); line-height:1.75;
+    font-family:"PingFang SC","Microsoft YaHei","Noto Sans SC",system-ui,-apple-system,sans-serif;
+    -webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:1120px; margin:0 auto; padding:44px 28px 70px;}
+  header{border-bottom:1px solid var(--line); padding-bottom:22px; margin-bottom:30px;}
+  h1{
+    margin:0 0 8px; font-size:30px; letter-spacing:2px; font-weight:700;
+    font-family:"Songti SC","Noto Serif SC","SimSun",serif;
+  }
+  .lead{margin:0; font-size:14px; color:var(--ink-2); max-width:760px;}
+  .kicker{font-size:11px; letter-spacing:3px; color:var(--ink-3); margin-bottom:10px;}
+
+  h2{
+    font-size:16px; margin:40px 0 14px; letter-spacing:1px; font-weight:700;
+    font-family:"Songti SC","Noto Serif SC",serif; display:flex; align-items:center; gap:10px;
+  }
+  h2::before{content:""; width:4px; height:16px; background:var(--zheng); border-radius:2px;}
+
+  .tools{display:grid; grid-template-columns:1fr 1fr; gap:18px;}
+  @media (max-width:820px){ .tools{grid-template-columns:1fr;} }
+  .tool{
+    display:block; text-decoration:none; color:inherit; background:var(--paper-2);
+    border:1px solid var(--line); border-radius:16px; padding:22px 24px;
+    box-shadow:0 6px 22px rgba(90,70,40,.05); transition:.2s;
+  }
+  .tool:hover{transform:translateY(-2px); box-shadow:0 12px 30px rgba(90,70,40,.10); border-color:#D3C4AC;}
+  .tool .tag{
+    display:inline-block; font-size:11px; letter-spacing:1px; padding:2px 9px; border-radius:5px;
+    background:#F1EADF; color:var(--ink-2); margin-bottom:10px;
+  }
+  .tool h3{margin:0 0 6px; font-size:18px; font-family:"Songti SC","Noto Serif SC",serif;}
+  .tool p{margin:0; font-size:13px; color:var(--ink-2);}
+  .tool .go{margin-top:14px; font-size:12.5px; color:var(--zheng); font-weight:600;}
+  .tool .go::after{content:" →";}
+
+  .grid-chapters{display:grid; grid-template-columns:repeat(auto-fill,minmax(168px,1fr)); gap:10px;}
+  .ch{
+    background:var(--paper-2); border:1px solid var(--line); border-radius:10px;
+    padding:11px 14px; font-size:13px; color:var(--ink-2); display:flex; align-items:center; gap:9px;
+  }
+  .ch .no{
+    width:20px; height:20px; border-radius:50%; background:#EFE7DA; color:var(--ink-3);
+    font-size:11px; display:inline-flex; align-items:center; justify-content:center; flex:0 0 auto;
+  }
+  .ch.done{background:#F0F5F1; border-color:#CBDDD2; color:#245A4C; font-weight:600;}
+  .ch.done .no{background:var(--ok); color:#fff;}
+  .ch .st{margin-left:auto; font-size:10.5px; color:var(--ink-3);}
+  .ch.done .st{color:var(--ok);}
+
+  .callout{
+    background:linear-gradient(180deg,#FFFDF8,#FBF6EC);
+    border:1px solid var(--line); border-left:4px solid var(--zheng);
+    border-radius:12px; padding:20px 24px;
+  }
+  .callout p{margin:0 0 12px; font-size:13.5px; color:var(--ink-2);}
+  .say{
+    display:block; background:#fff; border:1px dashed #D3C4AC; border-radius:9px;
+    padding:14px 16px; font-size:14px; color:var(--ink); line-height:1.9; margin:4px 0 14px;
+  }
+  .say b{color:var(--zheng);}
+  .steps{display:grid; gap:10px; margin-top:6px;}
+  .steps .s{display:flex; gap:12px; font-size:13px; color:var(--ink-2);}
+  .steps .s .i{
+    width:22px; height:22px; border-radius:6px; background:var(--ink); color:#fff; flex:0 0 auto;
+    font-size:11.5px; display:flex; align-items:center; justify-content:center; margin-top:2px;
+  }
+  .steps .s b{color:var(--ink);}
+
+  .tpl{display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-top:12px;}
+  @media (max-width:820px){ .tpl{grid-template-columns:1fr;} }
+  .tpl a{
+    display:block; text-decoration:none; color:inherit; background:var(--paper-2);
+    border:1px solid var(--line); border-radius:10px; padding:14px 16px; font-size:13px;
+    transition:.18s;
+  }
+  .tpl a:hover{background:#FBF6EC; border-color:#D3C4AC;}
+  .tpl a span{display:block; font-size:11px; color:var(--ink-3); margin-top:3px;}
+
+  .schema{
+    background:#FDFBF6; border:1px solid var(--line); border-radius:10px; overflow:auto;
+    font-family:"SF Mono",Menlo,Consolas,monospace; font-size:12px; line-height:1.8;
+    padding:16px 18px; color:#3C3832; white-space:pre;
+  }
+  footer{margin-top:44px; padding-top:18px; border-top:1px solid var(--line); font-size:11.5px; color:var(--ink-3);}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <div class="kicker">中药学 · 智慧课程工具箱</div>
+    <h1>章节工具总入口</h1>
+    <p class="lead">
+      一套通用引擎 + 一份可替换的数据。解表药是第 1 章的样板，后续每章沿用同一套结构：
+      知识图谱负责“知识成体系”，辨证练习器负责“会用药”。
+    </p>
+  </header>
+
+  <h2>解表药 · 已完成的样板</h2>
+  <div class="tools">
+    <a class="tool" href="解表药/知识图谱.html">
+      <span class="tag">理法方药可视化</span>
+      <h3>解表药知识图谱</h3>
+      <p>表证 → 风寒/风热 → 治法 → 解表药 → 方剂 → 禁忌，可点击、可筛选、可缩放。</p>
+      <div class="go">打开图谱</div>
+    </a>
+    <a class="tool" href="解表药/辨证练习器.html">
+      <span class="tag">四诊 → 辨证 → 立法 → 选药</span>
+      <h3>解表药辨证用药练习器</h3>
+      <p>6 个真实医案，规则透明可查；选错药物即时提示性味相反与配伍禁忌。</p>
+      <div class="go">打开练习器</div>
+    </a>
+  </div>
+
+  <h2>全课程进度表</h2>
+  <div class="grid-chapters">
+    <div class="ch done"><span class="no">1</span>解表药<span class="st">已完成</span></div>
+    <div class="ch"><span class="no">2</span>清热药<span class="st">待建</span></div>
+    <div class="ch"><span class="no">3</span>泻下药<span class="st">待建</span></div>
+    <div class="ch"><span class="no">4</span>祛风湿药<span class="st">待建</span></div>
+    <div class="ch"><span class="no">5</span>化湿药<span class="st">待建</span></div>
+    <div class="ch"><span class="no">6</span>利水渗湿药<span class="st">待建</span></div>
+    <div class="ch"><span class="no">7</span>温里药<span class="st">待建</span></div>
+    <div class="ch"><span class="no">8</span>理气药<span class="st">待建</span></div>
+    <div class="ch"><span class="no">9</span>消食药<span class="st">待建</span></div>
+    <div class="ch"><span class="no">10</span>驱虫药<span class="st">待建</span></div>
+    <div class="ch"><span class="no">11</span>止血药<span class="st">待建</span></div>
+    <div class="ch"><span class="no">12</span>活血化瘀药<span class="st">待建</span></div>
+    <div class="ch"><span class="no">13</span>化痰止咳平喘药<span class="st">待建</span></div>
+    <div class="ch"><span class="no">14</span>安神药<span class="st">待建</span></div>
+    <div class="ch"><span class="no">15</span>平肝息风药<span class="st">待建</span></div>
+    <div class="ch"><span class="no">16</span>开窍药<span class="st">待建</span></div>
+    <div class="ch"><span class="no">17</span>补虚药<span class="st">待建</span></div>
+    <div class="ch"><span class="no">18</span>收涩药<span class="st">待建</span></div>
+    <div class="ch"><span class="no">19</span>涌吐药<span class="st">待建</span></div>
+    <div class="ch"><span class="no">20</span>攻毒杀虫止痒药<span class="st">待建</span></div>
+    <div class="ch"><span class="no">21</span>拔毒化腐生肌药<span class="st">待建</span></div>
+  </div>
+
+  <h2>下次怎么调用</h2>
+  <div class="callout">
+    <p><b>方式一（推荐）：直接对我说一句话</b>，我读取模板、按你的教材口径生成本章两个工具。</p>
+    <span class="say">
+      用「中药学智慧工具」的模板，做第 <b>X</b> 章《<b>章名</b>》的两个工具：<br />
+      知识图谱按「证型 → 治法 → 药物 → 方剂 → 禁忌」组织，<br />
+      练习器出 <b>6</b> 个该章医案，证型和药物按我们教材的口径。
+    </span>
+    <p>例如：<i>“用模板做第 2 章《清热药》，练习器出 6 个医案，按我们教材口径。”</i></p>
+
+    <div class="steps">
+      <div class="s"><span class="i">1</span><span><b>你只需说章节与教材口径</b>，其余结构、配色、评分逻辑我沿用解表药这套，保持一致。</span></div>
+      <div class="s"><span class="i">2</span><span><b>若要自己改</b>：复制 <code>_模板</code> 里的文件到新章节文件夹，只替换 DATA 数据区，其余代码不要动。</span></div>
+      <div class="s"><span class="i">3</span><span><b>若要跨会话自动生效</b>：可把这套做法存成一个技能（Skill），我下次可直接调用，不必重新描述。</span></div>
+    </div>
+  </div>
+
+  <h2>模板文件</h2>
+  <div class="tpl">
+    <a href="_模板/知识图谱模板.html">知识图谱模板<span>替换 RAW / LINKS / INFO 三个数据区</span></a>
+    <a href="_模板/辨证练习器模板.html">辨证练习器模板<span>替换 SYM / PATTERNS / HERBS / CASES 四个数据区</span></a>
+  </div>
+
+  <h2>数据规范（换章节时只看这一段）</h2>
+  <div class="schema">知识图谱
+  RAW   节点  { id: { n:显示名, c:分类号, x, y, s:大小, shape, step:1-5 } }
+  LINKS 连线  [ ["起点id", "终点id"] ]
+  INFO  详情  { id: { tags:[标签], rows:[ [标题, 内容, 是否标红] ] } }
+  分类号     0=证型  1=治法  2=药(第一组)  3=药(第二组)  4=方剂  5=禁忌
+
+练习器
+  SYM      症状  [ { id, n } ]
+  PATTERNS 证型  { id, name, branch, must:{症状id:权重}, like:{...}, against:{...}, core:[药物id], formula }
+  HERBS    药物  { id: { n, t:性味, b:"han"|"re", core:[证型id], bad:{证型id:原因}, warn } }
+  CASES    医案  { complaint, body, tongue, present:[], extra:[], pattern, methods:[], correctMethod, analysis }</div>
+
+  <footer>
+    中药学智慧工具 · 解表药样板（2026）｜纯本地、离线可用，不依赖网络与账号
+  </footer>
+
+</div>
+</body>
+</html>
