@@ -197,18 +197,20 @@
 /* ============================================================
    医案分析 · 理法方药进阶训练（通用模板）
    用法：复制到 ./<章节名>/医案分析器.html，在 ADV 中追加本章医案。
-   每个医案字段：
-     text     病案原文，可用 <em></em> 标出关键句
-     sxOpts   四诊选项 [{id,n,ok}]（ok=false 为干扰项，建议 4–6 条）
-     bj       病机选项 [{n,ok,why}]（who 为误判时的解释，建议 3 正确 + 3 干扰）
-     zf       治法选项 [{n,ok}]（单选）
-     pool     可选药物 id 数组（10–14 味，含 4 味以上禁忌药）
-     need     必选药 {id:{w:权重, role:"jun|chen|zuo|shi"}}
-     ok       可用非首选 {id:{w:权重}}
-     bad      性味相悖 {id:{why}}
-     pair     核心药对 {opts,ans,rel,relOpts,meaning}
-     analysis 参考答案 {bj,zf,roles,diff}
-   ★ 换章节时同步替换 HERB 药物表。
+   字段：
+     text     病案原文（只放四诊资料，不要写辨证结论与处方，否则提前泄底）
+     sxOpts   四诊选项 [{id,n,ok}]        ok=false 为干扰项，建议 4–6 条
+     bj       病机选项 [{n,ok,why}]       why 为误判时的针对性解释
+     zf       治法 [{n,ok}]               单选
+     pool     可选药物 id 数组            10–14 味，含 4 味以上禁忌药
+     need     必选药 {id:{w,role}}        role ∈ jun/chen/zuo/shi
+     ok       可用非首选 {id:{w}}         bad 性味相悖 {id:{why}}
+     pairs    药对数组（推荐，可考多组配伍）
+              [{opts:[[a,b]], ans:"a|b", rel:"相须", relOpts:[...], meaning:"..."}]
+              单个药对可写 pair:{}，引擎自动兼容
+     analysis 参考答案 {bj, zf, roles, diff, orig}
+              herb:{n,t,g,rows:[[功效,本案对应,配伍]]}  // 可选：围绕某味药展开
+   ★ 换章节时同步替换 HERB 药物表；配伍 15 分在多个药对间均分。
    ============================================================ */
 
 
@@ -235,7 +237,9 @@
     jh:{n:"菊花", t:"甘、苦，微寒。归肺、肝经"},
     gg:{n:"葛根", t:"甘、辛，凉。归脾、胃、肺经"},
     chai:{n:"柴胡", t:"辛、苦，微寒。归肝、胆、肺经"},
-    dan:{n:"淡豆豉", t:"苦、辛，凉。归肺、胃经"}
+    dan:{n:"淡豆豉", t:"苦、辛，凉。归肺、胃经"},
+    xing:{n:"苦杏仁", t:"苦，微温；有小毒。归肺、大肠经"},
+    su:{n:"紫苏叶", t:"辛，温。归肺、脾经"}
   };
 
   var ROLE = {jun:"君", chen:"臣", zuo:"佐", shi:"使"};
@@ -352,20 +356,104 @@
         roles:[["薄荷","君","疏散风热，清利头目，利咽透疹"],["牛蒡子","臣","疏散风热，宣肺利咽，解毒消肿"],["桔梗","佐","宣肺利咽，载药上行"],["甘草","使","清热解毒，调和诸药"]],
         diff:"与风寒表证鉴别：彼恶寒重、无汗、口不渴、脉浮紧；此发热重、汗少、口渴、咽痛、脉浮数。与气分热盛鉴别：彼大热大汗大渴、脉洪大，此热势不高、病位在表。"
       }
+    },
+    {
+      id:"a3",
+      title:"涉水感寒水肿案",
+      src:"真实验案 · 1984-02-15 · 麻黄汤加味",
+      text:"吴某，男，36岁，1984年2月15日就诊。患者以捕鱼虾为生，经常涉水淋雨。三日前突然畏冷发热，无汗，咳嗽声重，痰白而稀，脸面浮肿，小便不利，而延余诊治。脉浮，舌苔薄白。",
+      meta:["男 · 36岁","1984年2月","病程 3 日","职业：捕鱼虾"],
+      hint:"先看起病与诱因，再看寒热、汗之有无；最后注意：咳嗽与水肿为何同时出现？病位在何处？",
+      sxOpts:[
+        {id:"wl", n:"畏冷（恶寒）", ok:true},
+        {id:"fr", n:"发热", ok:true},
+        {id:"wh", n:"无汗", ok:true},
+        {id:"ks", n:"咳嗽声重", ok:true},
+        {id:"tb", n:"痰白而稀", ok:true},
+        {id:"fz", n:"脸面浮肿", ok:true},
+        {id:"xb", n:"小便不利", ok:true},
+        {id:"mf", n:"脉浮", ok:true},
+        {id:"tbh", n:"苔薄白", ok:true},
+        {id:"ys", n:"经常涉水淋雨", ok:true},
+        {id:"hc", n:"汗出", ok:false},
+        {id:"kk", n:"口渴喜饮", ok:false},
+        {id:"yt", n:"咽痛", ok:false},
+        {id:"th", n:"痰黄稠", ok:false},
+        {id:"fs", n:"脉浮数", ok:false},
+        {id:"sh", n:"舌红苔黄", ok:false}
+      ],
+      bj:[
+        {n:"风寒犯肺，肺气郁闭", ok:true, why:"久涉水湿，风寒外袭，首先犯肺。"},
+        {n:"卫阳被遏，腠理闭塞", ok:true, why:"卫阳不能温煦肌表，故畏冷、无汗、脉浮。"},
+        {n:"肺失宣降，通调水道失职", ok:true, why:"肺为水之上源，肺气闭郁则水道不利。"},
+        {n:"水湿泛溢肌肤", ok:true, why:"水道不通，水湿外溢，故脸面浮肿、小便不利。"},
+        {n:"风热犯表，热邪壅肺", ok:false, why:"痰白稀、苔薄白、口不渴、无咽痛，全无热象。"},
+        {n:"脾肾阳虚，水湿内停", ok:false, why:"起病急、伴畏冷发热与脉浮，属表证；阳虚水肿多起病缓、脉沉细、以下肢为甚。"},
+        {n:"痰湿阻肺，并无表证", ok:false, why:"畏冷发热、脉浮，表证显著，不能只作内伤痰湿论。"}
+      ],
+      zf:[
+        {n:"辛温解表，宣肺平喘，利水消肿", ok:true},
+        {n:"辛凉解表，清肺泄热", ok:false},
+        {n:"健脾温肾，化气行水", ok:false},
+        {n:"发汗解表，调和营卫", ok:false}
+      ],
+      pool:["mah","gui","xing","jing","fang","qiang","bai","xi","sheng","su","bo","nbz","sy","jh"],
+      need:{ mah:{w:5, role:"jun"}, gui:{w:4, role:"chen"}, xing:{w:4, role:"zuo"} },
+      ok:{ jing:{w:2}, fang:{w:2}, qiang:{w:1.5}, bai:{w:1}, xi:{w:1}, sheng:{w:1.5}, su:{w:1.5} },
+      bad:{ bo:{why:"薄荷性凉，风寒证用之助寒"}, nbz:{why:"牛蒡子性寒，专于风热"}, sy:{why:"桑叶性寒，主治风热"}, jh:{why:"菊花微寒，主治风热"}},
+      pairs:[
+        {
+          opts:[["mah","gui"],["mah","xing"],["gui","xing"]],
+          ans:"mah|gui",
+          rel:"相须",
+          relOpts:["相须","相使","相畏","相杀","相反"],
+          meaning:"麻黄辛温，发汗解表、宣肺平喘、利水消肿，为君；桂枝辛甘温，解肌发表、温通经脉，为臣。二药同属辛温解表，性能功效相似，<span class='kw'>相须</span>为用，发汗解表之力倍增；表闭得开，则肺气自宣、水道自通。"
+        },
+        {
+          opts:[["mah","xing"],["mah","gui"],["gui","xing"]],
+          ans:"mah|xing",
+          rel:"相使",
+          relOpts:["相须","相使","相畏","相杀","相反"],
+          meaning:"麻黄辛温，开宣肺气而平喘，为君；苦杏仁苦降，降利肺气，为佐。二药一宣一降，以麻黄为主、杏仁为辅，<span class='kw'>相使</span>为用，恢复肺气宣降之常，故咳嗽声重、痰白而稀得平。"
+        }
+      ],
+      analysis:{
+        bj:"患者久涉水湿，风寒外袭，首先犯肺。风寒束表，卫阳被遏，腠理闭塞，故畏冷发热、无汗、脉浮、苔薄白；肺主宣降，外邪闭肺则肺气郁闭、宣降失职，故咳嗽声重、痰白而稀；肺为水之上源，主通调水道，肺气闭郁则水道不利，水湿泛溢肌肤，故脸面浮肿、小便不利。病位在肺卫，病性属寒，为风寒犯肺、肺气郁闭之水肿。",
+        zf:"辛温解表，宣肺平喘，利水消肿。",
+        roles:[
+          ["麻黄","君","发汗解表、宣肺平喘、利水消肿，一案而三功俱备"],
+          ["桂枝","臣","解肌发表，助麻黄发汗解表"],
+          ["苦杏仁","佐","降利肺气，与麻黄一宣一降以平喘"],
+          ["川牛膝、葱白","—","原方加味，非本章重点，此处不展开"]
+        ],
+        herb:{
+          n:"麻黄",
+          t:"辛、微苦，温。归肺、膀胱经。",
+          g:"发汗解表，宣肺平喘，利水消肿。",
+          rows:[
+            ["发汗解表","畏冷发热、无汗、脉浮","配桂枝：同属辛温解表，相须为用，开表发汗之力倍增"],
+            ["宣肺平喘","咳嗽声重、痰白而稀、肺气郁闭","配苦杏仁：麻黄主宣、杏仁主降，相使为用，一宣一降则咳喘自平"],
+            ["利水消肿","脸面浮肿、小便不利","宣肺以通调水道，即“提壶揭盖”之法，肺气宣则小便自利、肿自消"]
+          ]
+        },
+        orig:"原案辨证：风寒犯肺，肺气郁闭而致水肿。方用麻黄汤加味：麻黄15克，桂枝、苦杏仁各9克，川牛膝30克，葱白3茎，水煎温服。1剂后小便通利，诸症减轻。（川牛膝、葱白非本章重点，暂不展开。）",
+        diff:"与桂枝汤证鉴别：彼汗出、脉浮缓，属表虚；此无汗、脉浮，属表实。与风热犯肺鉴别：彼发热重、咽痛、口渴、痰黄、脉浮数、苔薄黄；此畏冷明显、口不渴、痰白稀、苔薄白。与脾肾阳虚水肿鉴别：彼起病缓、无表证、脉沉细、肿以下肢为甚；此起病急、有表证、脉浮、肿以脸面为先。"
+      }
     }
   ];
 
-  var state = { ci:0, step:0, sx:{}, bj:{}, zf:null, herbs:{}, pair:null, rel:null, done:false, score:null };
+  var state = { ci:0, step:0, sx:{}, bj:{}, zf:null, herbs:{}, pair:{}, rel:{}, done:false, score:null };
 
   var $ = function (id) { return document.getElementById(id); };
   var esc = function (s) { return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;"); };
 
   function cur(){ return ADV[state.ci]; }
+  function pairsOf(c){ return c.pairs || [c.pair]; }
 
   function reset(ci){
     state.ci = ci; state.step = 0;
     state.sx = {}; state.bj = {}; state.zf = null;
-    state.herbs = {}; state.pair = null; state.rel = null;
+    state.herbs = {}; state.pair = {}; state.rel = {};
     state.done = false; state.score = null;
     renderCase(); renderAll();
   }
@@ -445,17 +533,19 @@
       p += '<div class="grp" style="margin-top:14px"><div class="lbl">当前已选 '+n+' / 5 味</div></div>';
     }
     if (state.step === 4){
-      var pr = c.pair;
+      var prs = pairsOf(c);
       p += '<h3>第五步 · 配伍意义</h3>';
-      p += '<p class="desc">方中药物不是简单堆叠。先判断<b>核心药对</b>，再判断其<b>配伍关系</b>。</p>';
-      p += '<div class="grp"><div class="lbl">本案最核心的药对</div><div class="chips">' + pr.opts.map(function(o){
-        var k = o[0]+"|"+o[1];
-        return '<button class="chip '+(state.pair===k?'on':'')+'" data-pair="'+k+'">'+HERB[o[0]].n+' + '+HERB[o[1]].n+'</button>';
-      }).join("") + '</div></div>';
-      p += '<div class="grp"><div class="lbl">二者的配伍关系</div><div class="chips">' + pr.relOpts.map(function(r){
-        return '<button class="chip blue '+(state.rel===r?'on':'')+'" data-rel="'+r+'">'+r+'</button>';
-      }).join("") + '</div></div>';
-      p += '<div class="grp"><div class="lbl" style="color:var(--ink-3)">提示：相须—性能功效相似，协同增效；相使—一药为主，另一药为辅以提高主药疗效；相畏—一药毒性被另一药减轻；相杀—一药消除另一药毒性；相反—合用产生毒副作用。</div></div>';
+      p += '<p class="desc">方中药物不是简单堆叠。逐一判断<b>核心药对</b>及其<b>配伍关系</b>。</p>';
+      prs.forEach(function(pr, i){
+        p += '<div class="grp"><div class="lbl">'+(prs.length>1 ? ("药对 "+(i+1)+" / "+prs.length) : "本案核心药对")+'</div><div class="chips">' + pr.opts.map(function(o){
+          var k = o[0]+"|"+o[1];
+          return '<button class="chip '+(state.pair[i]===k?'on':'')+'" data-pair="'+i+':'+k+'">'+HERB[o[0]].n+' + '+HERB[o[1]].n+'</button>';
+        }).join("") + '</div></div>';
+        p += '<div class="grp"><div class="lbl">二者的配伍关系</div><div class="chips">' + pr.relOpts.map(function(r){
+          return '<button class="chip blue '+(state.rel[i]===r?'on':'')+'" data-rel="'+i+':'+r+'">'+r+'</button>';
+        }).join("") + '</div></div>';
+      });
+      p += '<div class="grp"><div class="lbl" style="color:var(--ink-3)">提示：相须—性能功效相似，协同增效；相使—一药为主、另一药为辅以提高主药疗效；相畏—一药毒性被另一药减轻；相杀—一药消除另一药毒性；相反—合用产生毒副作用。</div></div>';
     }
     $("panel").innerHTML = p;
     $("panel").scrollTop = 0;
@@ -473,7 +563,10 @@
         canNext = false; msg = "还有药物未指定角色";
       }
     }
-    if (state.step === 4 && (!state.pair || !state.rel)) { canNext = false; msg = "请完成药对与配伍关系判断"; }
+    if (state.step === 4){
+      pairsOf(c).forEach(function(pr, i){ if (!state.pair[i] || !state.rel[i]) canNext = false; });
+      if (!canNext) msg = "请完成全部药对与配伍关系";
+    }
 
     var last = state.step === STEPS.length - 1;
     $("actions").innerHTML =
@@ -553,14 +646,19 @@
       fb.push({t:"ok", x:"君臣佐使定位准确"});
     }
 
-    // 配伍 15
-    var pr = c.pair, pairOk = state.pair === pr.ans, relOk = state.rel === pr.rel;
-    s.pair = (pairOk ? 7 : 0) + (relOk ? 8 : 0);
-    if (pairOk && relOk) fb.push({t:"ok", x:"核心药对与配伍关系判断正确"});
-    else {
-      if (!pairOk) fb.push({t:"err", x:"核心药对应为「"+pr.ans.split("|").map(function(id){return HERB[id].n;}).join(" + ")+"」"});
-      if (!relOk) fb.push({t:"err", x:"配伍关系应为「"+pr.rel+"」"});
-    }
+    // 配伍 15（多药对均分）
+    var prs = pairsOf(c), pw = 15 / prs.length;
+    s.pair = 0;
+    prs.forEach(function(pr, i){
+      var pairOk = state.pair[i] === pr.ans, relOk = state.rel[i] === pr.rel;
+      s.pair += (pairOk ? pw * 7 / 15 : 0) + (relOk ? pw * 8 / 15 : 0);
+      var label = pr.ans.split("|").map(function(id){ return HERB[id].n; }).join(" + ");
+      if (pairOk && relOk) fb.push({t:"ok", x:"药对「"+label+"」与「"+pr.rel+"」判断正确"});
+      else {
+        if (!pairOk) fb.push({t:"err", x:"核心药对应为「"+label+"」"});
+        if (!relOk) fb.push({t:"err", x:"「"+label+"」的配伍关系应为「"+pr.rel+"」"});
+      }
+    });
 
     var total = Math.round(s.sx + s.bj + s.zf + s.herb + s.role + s.pair);
     return { total: total, s: s, fb: fb };
@@ -581,6 +679,23 @@
       return '<tr><th>'+x[1]+'</th><td><b>'+x[0]+'</b>　'+x[2]+'</td></tr>';
     }).join("");
 
+    var pairsHtml = pairsOf(c).map(function(pr){
+      return '<p><b>'+pr.ans.split("|").map(function(id){ return HERB[id].n; }).join(" + ")+
+        '（'+pr.rel+'）</b>　'+pr.meaning+'</p>';
+    }).join("");
+
+    var herbHtml = "";
+    if (a.herb){
+      herbHtml = '<h4>药物解析 · '+a.herb.n+'</h4>' +
+        '<p><b>性味归经：</b>'+a.herb.t+'</p>' +
+        '<p><b>功效：</b>'+a.herb.g+'</p>' +
+        '<table><tr><th style="width:86px">功效</th><th>本案对应</th><th>配伍</th></tr>' +
+        a.herb.rows.map(function(x){
+          return '<tr><td style="width:86px"><b>'+x[0]+'</b></td><td>'+x[1]+'</td><td>'+x[2]+'</td></tr>';
+        }).join("") + '</table>';
+    }
+    var origHtml = a.orig ? '<h4>原案辨证与用方</h4><p>'+a.orig+'</p>' : "";
+
     $("panel").innerHTML =
       '<div class="score"><div class="num">'+r.total+'<small> / 100</small></div><div class="bars">'+bar+'</div></div>'+
       '<ul class="fb">'+r.fb.map(function(f){ return '<li class="'+f.t+'">'+f.x+'</li>'; }).join("")+'</ul>'+
@@ -588,11 +703,13 @@
         '<h4>病因病机</h4><p>'+a.bj+'</p>'+
         '<h4>治法</h4><p>'+a.zf+'</p>'+
         '<h4>君臣佐使</h4><table>'+roles+'</table>'+
-        '<h4>配伍意义</h4><p>'+c.pair.meaning+'</p>'+
+        '<h4>配伍意义</h4>'+pairsHtml+
+        herbHtml+
+        origHtml+
         '<h4>鉴别要点</h4><p>'+a.diff+'</p>'+
       '</div>'+
       '<details class="tpl"><summary>教师用：新增医案的字段格式</summary><pre>'+
-      esc("{\n  id:\"a3\", title:\"案名\", src:\"出处\",\n  text:\"病案原文（可用 <em> 标出关键句）\",\n  meta:[\"性别·年龄\",\"季节\"],\n  hint:\"读案提示\",\n  sxOpts:[{id:\"x\", n:\"表现\", ok:true}, ...],\n  bj:[{n:\"病机\", ok:true, why:\"依据\"}, ...],\n  zf:[{n:\"治法\", ok:true}, ...],\n  pool:[\"mah\",\"gui\",...],\n  need:{ mah:{w:5, role:\"jun\"} },\n  ok:{ jing:{w:2} },\n  bad:{ bo:{why:\"性凉相悖\"} },\n  pair:{ opts:[[\"mah\",\"gui\"]], ans:\"mah|gui\", rel:\"相须\",\n         relOpts:[\"相须\",\"相使\",\"相畏\",\"相杀\",\"相反\"], meaning:\"...\" },\n  analysis:{ bj:\"...\", zf:\"...\", roles:[[\"药\",\"君\",\"作用\"]], diff:\"...\" }\n}")+
+      esc("{\n  id:\"a4\", title:\"案名\", src:\"出处\",\n  text:\"病案原文（可用 <em> 标出关键句）\",\n  meta:[\"性别·年龄\",\"季节\"], hint:\"读案提示\",\n  sxOpts:[{id:\"x\", n:\"表现\", ok:true}, ...],\n  bj:[{n:\"病机\", ok:true, why:\"误判时的解释\"}, ...],\n  zf:[{n:\"治法\", ok:true}, ...],\n  pool:[\"mah\",\"gui\",...],\n  need:{ mah:{w:5, role:\"jun\"} }, ok:{ jing:{w:2} },\n  bad:{ bo:{why:\"性凉相悖\"} },\n  pairs:[\n    { opts:[[\"mah\",\"gui\"],[\"mah\",\"xing\"]], ans:\"mah|gui\", rel:\"相须\",\n      relOpts:[\"相须\",\"相使\",\"相畏\",\"相杀\",\"相反\"], meaning:\"...\" }\n  ],\n  analysis:{ bj:\"...\", zf:\"...\", roles:[[\"药\",\"君\",\"作用\"]], diff:\"...\",\n             herb:{ n:\"麻黄\", t:\"性味归经\", g:\"功效\",\n                    rows:[[\"功效\",\"本案对应\",\"配伍\"]] },\n             orig:\"原案辨证与用方\" }\n}")+
       '</pre></details>';
 
     $("actions").innerHTML =
@@ -629,11 +746,11 @@
       renderPanel(); renderActions(); return;
     }
 
-    var pr = t.closest("[data-pair]");
-    if (pr) { state.pair = pr.dataset.pair; renderPanel(); renderActions(); return; }
+    var prEl = t.closest("[data-pair]");
+    if (prEl) { var pa = prEl.dataset.pair.split(":"); state.pair[pa[0]] = pa.slice(1).join(":"); renderPanel(); renderActions(); return; }
 
-    var rl = t.closest("[data-rel]");
-    if (rl) { state.rel = rl.dataset.rel; renderPanel(); renderActions(); return; }
+    var rlEl = t.closest("[data-rel]");
+    if (rlEl) { var ra = rlEl.dataset.rel.split(":"); state.rel[ra[0]] = ra.slice(1).join(":"); renderPanel(); renderActions(); return; }
 
     var a = t.closest("[data-a]");
     if (!a) return;
