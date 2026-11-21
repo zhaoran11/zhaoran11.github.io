@@ -33,8 +33,8 @@
   }
   h2::before{content:""; width:4px; height:16px; background:var(--zheng); border-radius:2px;}
 
-  .tools{display:grid; grid-template-columns:1fr 1fr; gap:18px;}
-  @media (max-width:820px){ .tools{grid-template-columns:1fr;} }
+  .tools{display:grid; grid-template-columns:repeat(3,1fr); gap:16px;}
+  @media (max-width:1000px){ .tools{grid-template-columns:1fr;} }
   .tool{
     display:block; text-decoration:none; color:inherit; background:var(--paper-2);
     border:1px solid var(--line); border-radius:16px; padding:22px 24px;
@@ -83,7 +83,7 @@
   }
   .steps .s b{color:var(--ink);}
 
-  .tpl{display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-top:12px;}
+  .tpl{display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:12px; margin-top:12px;}
   @media (max-width:820px){ .tpl{grid-template-columns:1fr;} }
   .tpl a{
     display:block; text-decoration:none; color:inherit; background:var(--paper-2);
@@ -109,7 +109,7 @@
     <h1>章节工具总入口</h1>
     <p class="lead">
       一套通用引擎 + 一份可替换的数据。解表药是第 1 章的样板，后续每章沿用同一套结构：
-      知识图谱负责“知识成体系”，辨证练习器负责“会用药”。
+      知识图谱负责“知识成体系”，初级练习器负责“认症选药”，进阶医案分析负责“理法方药完整推演”。
     </p>
   </header>
 
@@ -122,10 +122,16 @@
       <div class="go">打开图谱</div>
     </a>
     <a class="tool" href="解表药/辨证练习器.html">
-      <span class="tag">四诊 → 辨证 → 立法 → 选药</span>
-      <h3>解表药辨证用药练习器</h3>
+      <span class="tag">初级 · 四诊 → 辨证 → 立法 → 选药</span>
+      <h3>解表药辨证练习器</h3>
       <p>6 个真实医案，规则透明可查；选错药物即时提示性味相反与配伍禁忌。</p>
-      <div class="go">打开练习器</div>
+      <div class="go">打开初级训练</div>
+    </a>
+    <a class="tool" href="解表药/医案分析器.html">
+      <span class="tag">进阶 · 读案 → 析机 → 立法 → 选药 → 配伍</span>
+      <h3>医案分析 · 理法方药训练</h3>
+      <p>给完整病案原文，学生自主析病机、定治法、排君臣佐使、判药对配伍，逐项评分讲评。</p>
+      <div class="go">打开进阶训练</div>
     </a>
   </div>
 
@@ -156,11 +162,12 @@
 
   <h2>下次怎么调用</h2>
   <div class="callout">
-    <p><b>方式一（推荐）：直接对我说一句话</b>，我读取模板、按你的教材口径生成本章两个工具。</p>
+    <p><b>方式一（推荐）：直接对我说一句话</b>，我读取模板、按你的教材口径生成本章三个工具。</p>
     <span class="say">
-      用「中药学智慧工具」的模板，做第 <b>X</b> 章《<b>章名</b>》的两个工具：<br />
+      用「中药学智慧工具」的模板，做第 <b>X</b> 章《<b>章名</b>》的三个工具：<br />
       知识图谱按「证型 → 治法 → 药物 → 方剂 → 禁忌」组织，<br />
-      练习器出 <b>6</b> 个该章医案，证型和药物按我们教材的口径。
+      初级练习器出 <b>6</b> 个典型医案，进阶医案分析出 <b>2–3</b> 个完整病案，<br />
+      证型、药物与配伍按我们教材的口径。
     </span>
     <p>例如：<i>“用模板做第 2 章《清热药》，练习器出 6 个医案，按我们教材口径。”</i></p>
 
@@ -174,7 +181,8 @@
   <h2>模板文件</h2>
   <div class="tpl">
     <a href="_模板/知识图谱模板.html">知识图谱模板<span>替换 RAW / LINKS / INFO 三个数据区</span></a>
-    <a href="_模板/辨证练习器模板.html">辨证练习器模板<span>替换 SYM / PATTERNS / HERBS / CASES 四个数据区</span></a>
+    <a href="_模板/辨证练习器模板.html">初级练习器模板<span>替换 SYM / PATTERNS / HERBS / CASES 四个数据区</span></a>
+    <a href="_模板/医案分析器模板.html">进阶医案分析模板<span>在 ADV 中追加本章医案，含君臣佐使与配伍判读</span></a>
   </div>
 
   <h2>数据规范（换章节时只看这一段）</h2>
@@ -188,7 +196,16 @@
   SYM      症状  [ { id, n } ]
   PATTERNS 证型  { id, name, branch, must:{症状id:权重}, like:{...}, against:{...}, core:[药物id], formula }
   HERBS    药物  { id: { n, t:性味, b:"han"|"re", core:[证型id], bad:{证型id:原因}, warn } }
-  CASES    医案  { complaint, body, tongue, present:[], extra:[], pattern, methods:[], correctMethod, analysis }</div>
+  CASES    医案  { complaint, body, tongue, present:[], extra:[], pattern, methods:[], correctMethod, analysis }
+
+进阶医案分析
+  text     病案原文（可用 &lt;em&gt; 标关键句）
+  sxOpts   四诊选项 [{id,n,ok}]        bj  病机 [{n,ok,why}]
+  zf       治法 [{n,ok}]               pool 药物 id 池
+  need     必选药 {id:{w,role}}         ok  可用非首选 {id:{w}}   bad 相悖 {id:{why}}
+  pair     药对 {opts,ans,rel,relOpts,meaning}
+  analysis 参考答案 {bj,zf,roles,diff}
+  评分：四诊15 + 病机20 + 治法15 + 选药25 + 君臣10 + 配伍15</div>
 
   <footer>
     中药学智慧工具 · 解表药样板（2026）｜纯本地、离线可用，不依赖网络与账号
