@@ -60,12 +60,42 @@
   .step .tip{font-size:12px; color:var(--ink-3); margin:0 0 12px 30px;}
 
   .chips{display:flex; flex-wrap:wrap; gap:8px;}
+  #chips{display:block;}
   .chip{
     font-family:inherit; font-size:13px; color:var(--ink-2); background:#fff; border:1px solid var(--line);
     border-radius:999px; padding:6px 14px; cursor:pointer; transition:.16s;
   }
   .chip:hover{border-color:#C9B99E; background:#FBF6EC;}
   .chip.on{background:var(--ink); border-color:var(--ink); color:#fff;}
+
+  /* 手写作答 */
+  .free{
+    width:100%; min-height:110px; resize:vertical; display:block;
+    font:inherit; font-size:14px; line-height:1.95;
+    border:1px solid var(--line); border-radius:10px; padding:12px 14px;
+    background:var(--paper-2); color:var(--ink);
+  }
+  .free:focus{outline:none; border-color:#C9B99E; box-shadow:0 0 0 3px rgba(193,136,43,.09);}
+  .free::placeholder{color:var(--ink-3);}
+  .frow{display:flex; align-items:center; gap:12px; margin-top:11px; flex-wrap:wrap;}
+  .frow .cnt{font-size:12px; color:var(--ink-3);}
+  .tag{font-size:12px; border-radius:6px; padding:2px 9px; border:1px solid;}
+  .tag.ok{background:#F0F5F1; border-color:#CBDDD2; color:#245A4C;}
+  .tag.bad{background:#FBEDE6; border-color:#E0B3A4; color:#8A2F32;}
+  .fback{margin-top:14px;}
+  .fback .lbl{font-size:11.5px; color:var(--ink-3); margin-bottom:7px; letter-spacing:1px;}
+  .hintbox{
+    margin-top:14px; background:#FBF4E4; border:1px solid #EBD9B4;
+    border-left:3px solid var(--fa); border-radius:10px; padding:12px 15px;
+  }
+  .hintbox .lbl{font-size:11.5px; color:#8A6B22; letter-spacing:1px; margin-bottom:5px;}
+  .hintbox p{margin:0; font-size:13px; color:#5C4A1E; line-height:1.95;}
+  .hintbox.done{background:#F0F5F1; border-color:#CBDDD2; border-left-color:var(--ok);}
+  .hintbox.done p{color:#245A4C;}
+  .btn.small{font-size:12px; padding:4px 12px; margin-top:10px;}
+  .btn:disabled{opacity:.45; cursor:not-allowed;}
+  .locked .free{pointer-events:none; opacity:.72;}
+  .locked .btn.small{pointer-events:none; opacity:.45;}
 
   .opts{display:grid; gap:8px;}
   .opt{
@@ -182,7 +212,7 @@
 
     <section class="card step">
       <h3><span class="no">1</span>四诊采集</h3>
-      <p class="tip">从下列症状中选出本案<b>实际存在</b>的四诊信息（含舌脉），多选或漏选都会影响得分。</p>
+      <p class="tip">用自己的话写下本案<b>实际存在</b>的四诊信息（含舌脉），写完点「检查一下」。多写或漏写都会影响得分。</p>
       <div class="chips" id="chips"></div>
     </section>
 
@@ -195,7 +225,7 @@
 
     <section class="card step">
       <h3><span class="no">3</span>立法</h3>
-      <p class="tip">根据证型选择相应治法。</p>
+      <p class="tip">用自己的话写出本案治法，写清大方向与具体作用。</p>
       <div class="opts" id="methods"></div>
     </section>
 
@@ -259,6 +289,47 @@
     { id: "mai_huan",  n: "脉浮缓" },
     { id: "mai_shu",   n: "脉浮数" }
   ];
+
+  /* 症状 id → 同义词（供手写四诊文本匹配；保留同义重叠，如「恶寒」同时属于恶寒重/恶寒轻） */
+  var SYM_K = {
+    han_zhong:  ["恶寒重", "恶寒", "怕冷", "畏寒", "发冷"],
+    han_qing:   ["恶寒轻 / 恶风", "恶寒轻", "恶风", "微恶寒", "恶寒渐轻", "怕风", "恶寒"],
+    re_zhong:   ["发热重", "壮热", "高热", "身热增盛", "发热"],
+    re_qing:    ["发热轻 / 身热不甚", "发热轻", "身热不甚", "微热", "低热", "发热"],
+    wu_han:     ["无汗", "不出汗", "汗不出", "未见汗出"],
+    you_han:    ["汗出", "有汗", "自汗", "汗多", "汗出不畅"],
+    tou_tong:   ["头痛", "头疼", "头部疼痛"],
+    shen_tong:  ["身痛", "周身疼痛", "全身酸痛", "身体疼痛"],
+    shen_zhong: ["肢体酸重疼痛", "肢体酸重", "酸重疼痛", "头身重痛", "身重", "肢体沉重"],
+    bi_sai:     ["鼻塞流清涕", "鼻塞", "流清涕", "鼻流清涕", "鼻子不通"],
+    yan_tong:   ["咽喉红肿疼痛", "咽痛", "咽喉疼痛", "咽喉肿痛", "咽部红肿", "咽微痛"],
+    ke_bai:     ["咳嗽痰白稀", "咳嗽痰白", "痰白稀", "痰白", "咳痰色白"],
+    ke_huang:   ["咳嗽痰黄", "痰黄", "痰黄黏", "咳痰黄稠", "咳嗽痰黄黏"],
+    kou_ke:     ["口渴", "口微渴", "口干", "渴喜冷饮"],
+    mu_tong:    ["目疼鼻干", "目疼", "鼻干", "目赤", "眼眶痛"],
+    tai_bai:    ["苔薄白 / 白腻", "苔薄白", "苔白腻", "白腻", "舌苔薄白", "苔白"],
+    tai_huang:  ["苔薄黄", "苔黄", "黄苔", "舌苔薄黄"],
+    mai_jin:    ["脉浮紧", "浮紧", "脉紧"],
+    mai_huan:   ["脉浮缓", "浮缓", "脉缓"],
+    mai_shu:    ["脉浮数", "浮数", "脉数"]
+  };
+
+  /* 治法子句 → 同义词（覆盖 6 个医案出现的全部子句） */
+  var ZF_SYN = {
+    "辛温解表": ["辛温解表", "辛温", "解表散寒", "发散风寒", "发汗解表"],
+    "宣肺散寒": ["宣肺", "散寒"],
+    "辛凉透表": ["辛凉透表", "辛凉", "透表", "疏风清热"],
+    "清热解毒": ["清热解毒", "解毒", "清热"],
+    "解肌发表": ["解肌发表", "解肌", "发表"],
+    "调和营卫": ["调和营卫", "调营卫", "和营卫"],
+    "疏风清热": ["疏风清热", "疏风", "清热透表", "疏风泄热"],
+    "宣肺止咳": ["宣肺止咳", "止咳", "宣肺"],
+    "辛温发汗": ["辛温发汗", "辛温", "发汗", "发汗解表"],
+    "宣肺平喘": ["宣肺平喘", "平喘", "宣肺"],
+    "发汗祛湿": ["发汗祛湿", "祛湿", "发汗", "散寒祛湿"],
+    "兼清里热": ["兼清里热", "清里热", "兼清里"],
+    "解肌清热": ["解肌清热", "解肌退热", "解肌透热"]
+  };
 
   var PATTERNS = [
     {
@@ -393,7 +464,33 @@
   ];
 /* DATA-END */
 
-  var state = { idx: 0, sel: new Set(), cands: [], method: null, herbs: new Set(), done: false };
+  var state = {
+    idx: 0,
+    txt: { sx: "", zf: "" },
+    hintLv: { sx: 0, zf: 0 },
+    checked: {},
+    cands: [],
+    herbs: new Set(),
+    done: false
+  };
+
+  /* 手写四诊 / 立法的三级提示（常量，不直接给答案） */
+  var FREE_HINT = {
+    sx: [
+      "先把病人自己说的和医生查到的分开：冷不冷？热不热？出不出汗？",
+      "再看局部：头身有没有疼痛、鼻子通不通、咳嗽的痰是什么颜色。",
+      "别忘了舌象和脉象——苔与脉是定寒热表里的关键。"
+    ],
+    zf: [
+      "治法先定大方向：本案偏寒还是偏热？",
+      "再看病位：邪在表、在肺、还是在营卫之间？",
+      "把「大方向 + 具体作用」合成一句规范治法，只写「解表」两个字不够。"
+    ]
+  };
+  var FREE_PH = {
+    sx: "如：恶寒、发热、无汗、头痛、咳嗽痰白……（用词或短句都行）",
+    zf: "如：辛温解表，宣肺散寒……"
+  };
 
   var $ = function (id) { return document.getElementById(id); };
 
@@ -408,6 +505,111 @@
     return null;
   }
 
+  /* ---------- 手写文本匹配 ---------- */
+  function norm(s){
+    return String(s || "").toLowerCase().replace(/[\s，,。、；;：:（）()【】\[\]"'“”‘’？！!?.]/g, "");
+  }
+
+  // 命中同义词；紧贴"不/无/未/非/没"或"没有/未见"时不算（如"无汗"不算"汗出"）
+  function hitKey(text, k){
+    var NEG2 = ["没有", "并无", "未见", "未闻", "不伴", "不发"];
+    for (var i = 0; i < k.length; i++){
+      var w = norm(k[i]), idx = text.indexOf(w);
+      while (idx >= 0){
+        var p1 = text.charAt(idx - 1), p2 = text.slice(Math.max(0, idx - 2), idx);
+        if (!/[不无未非没]/.test(p1) && NEG2.indexOf(p2) < 0) return true;
+        idx = text.indexOf(w, idx + w.length);
+      }
+    }
+    return false;
+  }
+
+  // 只在 present ∪ extra 里匹配，避免把本案不存在的症状算进来
+  function selNow(){
+    var c = CASES[state.idx], pool = c.present.concat(c.extra), out = new Set();
+    var t = norm(state.txt.sx);
+    pool.forEach(function(id){
+      var ks = SYM_K[id] || [symName(id)];
+      if (hitKey(t, ks)) out.add(id);
+    });
+    // 同义重叠消歧：已明确写「恶寒轻 / 微恶寒 / 恶风」时，不把其中的“恶寒”再算作「恶寒重」
+    if (out.has("han_zhong") && out.has("han_qing") && !hitKey(t, ["恶寒重", "畏寒", "怕冷", "发冷", "寒战"])) {
+      out.delete("han_zhong");
+    }
+    return out;
+  }
+
+  function countHit(arr) {
+    var n = 0;
+    for (var i = 0; i < arr.length; i++) if (arr[i]) n++;
+    return n;
+  }
+
+  /* ---------- 立法判分 ---------- */
+  function methodClauses(c) {
+    return c.methods[c.correctMethod].split("，").map(function (s) { return s.trim(); }).filter(Boolean);
+  }
+
+  // 由正确治法判断本案寒热方向
+  function caseBranchOf(c) {
+    var m = c.methods[c.correctMethod];
+    if (m.indexOf("辛温") >= 0) return "han";
+    if (m.indexOf("辛凉") >= 0) return "re";
+    return "";
+  }
+
+  function oppositeKeys(c) {
+    var b = caseBranchOf(c);
+    if (b === "han") return ["辛凉", "清热", "透表", "凉解"];
+    if (b === "re") return ["辛温", "散寒", "发汗", "温燥"];
+    return [];
+  }
+
+  function judgeMethod(text, c) {
+    var t = norm(text);
+    var clauses = methodClauses(c);
+    var opp = oppositeKeys(c);
+    var badDir = !!(opp.length && hitKey(t, opp));
+    var hits = clauses.map(function (cl) {
+      if (badDir) return false;
+      return hitKey(t, ZF_SYN[cl] || [cl]);
+    });
+    return { clauses: clauses, hits: hits, badDir: badDir };
+  }
+
+  function freeIncomplete(kind) {
+    var c = CASES[state.idx];
+    if (kind === "sx") {
+      var s = selNow();
+      return c.present.some(function (id) { return !s.has(id); });
+    }
+    var mj = judgeMethod(state.txt.zf, c);
+    return countHit(mj.hits) < mj.clauses.length;
+  }
+
+  function hintText(kind) {
+    var hs = FREE_HINT[kind], lv = state.hintLv[kind] || 1;
+    var t = hs[Math.min(lv, hs.length) - 1];
+    if (kind === "sx" && lv >= 3) {
+      var extra = CASES[state.idx].extra.map(symName);
+      if (extra.length) t += "另外注意：本案没有「" + extra.join("、") + "」这类表现，别凭印象写进去。";
+    }
+    return t;
+  }
+
+  function countText(kind) {
+    var c = CASES[state.idx];
+    if (kind === "sx") {
+      var sel = selNow();
+      var good = c.present.filter(function (id) { return sel.has(id); }).length;
+      var bad = c.extra.filter(function (id) { return sel.has(id); }).length;
+      return "已写到 " + good + " / " + c.present.length + " 个表现" +
+             (state.checked.sx && bad ? "，另有 " + bad + " 处需修正" : "");
+    }
+    var mj = judgeMethod(state.txt.zf, c);
+    return "已写到 " + countHit(mj.hits) + " / " + mj.clauses.length + " 个要点";
+  }
+
   function renderCase() {
     var c = CASES[state.idx];
     $("case").innerHTML =
@@ -418,20 +620,82 @@
 
   function renderChips() {
     var c = CASES[state.idx];
-    var pool = c.present.concat(c.extra);
-    var html = pool.map(function (id) {
-      var on = state.sel.has(id) ? " on" : "";
-      return '<button class="chip' + on + '" data-s="' + id + '">' + esc(symName(id)) + '</button>';
-    }).join("");
+    var sel = selNow();
+    var written = c.present.filter(function (id) { return sel.has(id); });
+    var bads = c.extra.filter(function (id) { return sel.has(id); });
+
+    var html = '<textarea class="free" data-free="sx" placeholder="' + FREE_PH.sx + '">' + esc(state.txt.sx) + '</textarea>';
+    html += '<div class="frow">' +
+            '<button class="btn" data-check="sx"' + (state.txt.sx.trim() ? "" : " disabled") + '>检查一下</button>' +
+            '<span class="cnt" data-cnt="sx">' + countText("sx") + '</span></div>';
+
+    if (state.checked.sx) {
+      html += '<div class="fback">';
+      if (written.length) {
+        html += '<div class="lbl">你已经写到</div><div class="chips">' +
+                written.map(function (id) {
+                  return '<span class="tag ok">' + esc(symName(id)) + '</span>';
+                }).join("") + '</div>';
+      }
+      if (bads.length) {
+        html += '<div class="lbl" style="margin-top:10px">这些本案没有</div><div class="chips">' +
+                bads.map(function (id) {
+                  return '<span class="tag bad">' + esc(symName(id)) + '</span>';
+                }).join("") + '</div>';
+      }
+      if (!written.length && !bads.length) {
+        html += '<div class="lbl">还没有识别出四诊表现，按病例原文逐句核对。</div>';
+      }
+      html += '</div>';
+
+      if (written.length < c.present.length) {
+        var lv = state.hintLv.sx || 1;
+        html += '<div class="hintbox"><div class="lbl">提示 ' + lv + ' / 3</div>' +
+                '<p>' + esc(hintText("sx")) + '</p>' +
+                (lv < 3 ? '<button class="btn small" data-more="sx">再给我一点提示</button>' : "") +
+                '</div>';
+      } else {
+        html += '<div class="hintbox done"><p>' +
+                (bads.length ? "本案的实际表现都写到了，但还写进了本案没有的症状，提交会扣分。" : "四诊表现齐了。") +
+                '</p></div>';
+      }
+    }
     $("chips").innerHTML = html;
   }
 
   function renderMethods() {
     var c = CASES[state.idx];
-    $("methods").innerHTML = c.methods.map(function (m, i) {
-      var on = state.method === i ? " on" : "";
-      return '<button class="opt' + on + '" data-m="' + i + '"><span class="dot"></span>' + esc(m) + '</button>';
-    }).join("");
+    var mj = judgeMethod(state.txt.zf, c);
+    var hitClauses = mj.clauses.filter(function (cl, i) { return mj.hits[i]; });
+
+    var html = '<textarea class="free" data-free="zf" placeholder="' + FREE_PH.zf + '">' + esc(state.txt.zf) + '</textarea>';
+    html += '<div class="frow">' +
+            '<button class="btn" data-check="zf"' + (state.txt.zf.trim() ? "" : " disabled") + '>检查一下</button>' +
+            '<span class="cnt" data-cnt="zf">' + countText("zf") + '</span></div>';
+
+    if (state.checked.zf) {
+      html += '<div class="fback">';
+      if (hitClauses.length) {
+        html += '<div class="lbl">你已经写到</div><div class="chips">' +
+                hitClauses.map(function (cl) {
+                  return '<span class="tag ok">' + esc(cl) + '</span>';
+                }).join("") + '</div>';
+      } else {
+        html += '<div class="lbl">还没有写到本案治法的要点，按提示先把大方向定下来。</div>';
+      }
+      html += '</div>';
+
+      if (hitClauses.length < mj.clauses.length) {
+        var lv = state.hintLv.zf || 1;
+        html += '<div class="hintbox"><div class="lbl">提示 ' + lv + ' / 3</div>' +
+                '<p>' + esc(hintText("zf")) + '</p>' +
+                (lv < 3 ? '<button class="btn small" data-more="zf">再给我一点提示</button>' : "") +
+                '</div>';
+      } else {
+        html += '<div class="hintbox done"><p>治法要点齐了。</p></div>';
+      }
+    }
+    $("methods").innerHTML = html;
   }
 
   function renderHerbs() {
@@ -477,12 +741,12 @@
   }
 
   function showCandidates() {
-    if (!state.sel.size) {
+    if (!selNow().size) {
       state.cands = [];
-      $("cand").innerHTML = '<div class="placeholder">请先在上一步选择四诊信息。</div>';
+      $("cand").innerHTML = '<div class="placeholder">请先在上一步写下四诊表现。</div>';
       return;
     }
-    var cands = computeCandidates(state.sel);
+    var cands = computeCandidates(selNow());
     state.cands = cands;
     var top = cands.slice(0, 3);
     var html = top.map(function (x, i) {
@@ -494,7 +758,7 @@
              '<span class="track"><i style="width:' + x.score + '%"></i></span>' +
              '<span class="reason">' + reason + '</span></div>';
     }).join("");
-    $("cand").innerHTML = html || '<div class="placeholder">请先选择四诊信息。</div>';
+    $("cand").innerHTML = html || '<div class="placeholder">请先在上一步写下四诊表现。</div>';
   }
 
   function judgeHerbs(p) {
@@ -512,25 +776,27 @@
   function submit() {
     var c = CASES[state.idx];
     var p = patById(c.pattern);
+    var sel = selNow();
 
     // 四诊 20 分（F1）
     var present = {};
     c.present.forEach(function (k) { present[k] = true; });
     var hit = 0;
-    state.sel.forEach(function (k) { if (present[k]) hit++; });
-    var precision = state.sel.size ? hit / state.sel.size : 0;
+    sel.forEach(function (k) { if (present[k]) hit++; });
+    var precision = sel.size ? hit / sel.size : 0;
     var recall = hit / c.present.length;
     var f1 = (precision + recall) ? 2 * precision * recall / (precision + recall) : 0;
     var s4 = Math.round(f1 * 20);
 
     // 辨证 30 分
-    var cands = computeCandidates(state.sel);
+    var cands = computeCandidates(sel);
     var isTop1 = cands[0].p.id === p.id;
     var inTop2 = cands.slice(0, 2).some(function (x) { return x.p.id === p.id; });
-    var sdx = state.sel.size < 3 ? 0 : (isTop1 ? 30 : (inTop2 ? 15 : 0));
+    var sdx = sel.size < 3 ? 0 : (isTop1 ? 30 : (inTop2 ? 15 : 0));
 
-    // 立法 20 分
-    var sm = state.method === c.correctMethod ? 20 : 0;
+    // 立法 20 分（按手写文本命中的子句计分）
+    var mj = judgeMethod(state.txt.zf, c);
+    var sm = mj.clauses.length ? Math.round(countHit(mj.hits) / mj.clauses.length * 20) : 0;
 
     // 选药 30 分
     var j = judgeHerbs(p);
@@ -557,25 +823,33 @@
     }).join("");
 
     // 反馈明细
-    var miss = c.present.filter(function (k) { return !state.sel.has(k); });
+    var miss = c.present.filter(function (k) { return !sel.has(k); });
     var falsePos = [];
-    state.sel.forEach(function (k) { if (!present[k]) falsePos.push(k); });
+    sel.forEach(function (k) { if (!present[k]) falsePos.push(k); });
 
     var fb = [];
-    if (miss.length) fb.push({ t: "err", x: "漏选四诊：" + miss.map(symName).join("、") });
-    if (falsePos.length) fb.push({ t: "err", x: "多选（本案无）：" + falsePos.map(symName).join("、") });
+    if (miss.length) fb.push({ t: "err", x: "漏写四诊：" + miss.map(symName).join("、") });
+    if (falsePos.length) fb.push({ t: "err", x: "多写（本案无）：" + falsePos.map(symName).join("、") });
     if (!miss.length && !falsePos.length) fb.push({ t: "ok", x: "四诊采集完整、无冗余" });
 
     fb.push({
-      t: state.sel.size < 3 ? "err" : (isTop1 ? "ok" : (inTop2 ? "warn" : "err")),
-      x: state.sel.size < 3 ? "辨证：四诊信息不足，诊断不能成立" :
+      t: sel.size < 3 ? "err" : (isTop1 ? "ok" : (inTop2 ? "warn" : "err")),
+      x: sel.size < 3 ? "辨证：四诊信息不足，诊断不能成立" :
          "辨证：" + (isTop1 ? "首选正确——" : (inTop2 ? "次选命中——" : "未命中——")) +
          "本题应为「" + p.name + "」"
     });
-    fb.push({
-      t: sm ? "ok" : "err",
-      x: "立法：" + (sm ? "正确" : "应为「" + c.methods[c.correctMethod] + "」")
-    });
+
+    if (sm >= 20) {
+      fb.push({ t: "ok", x: "立法：要点齐全" });
+    } else {
+      var missedCl = [];
+      mj.clauses.forEach(function (cl, i) { if (!mj.hits[i]) missedCl.push(cl); });
+      fb.push({
+        t: "err",
+        x: "立法：" + (mj.badDir ? "寒热方向写反了；" : "") +
+           "还缺「" + missedCl.join("、") + "」，参考答案「" + c.methods[c.correctMethod] + "」"
+      });
+    }
 
     j.good.forEach(function (id) {
       fb.push({ t: "ok", x: "选药：" + HERBS[id].n + "——首选药，切中证型" });
@@ -617,19 +891,45 @@
   }
 
   // 事件绑定
-  $("chips").addEventListener("click", function (e) {
-    var b = e.target.closest("[data-s]");
-    if (!b || state.done) return;
-    var id = b.getAttribute("data-s");
-    if (state.sel.has(id)) state.sel.delete(id); else state.sel.add(id);
-    b.classList.toggle("on");
-  });
+  function onFreeClick(e) {
+    if (state.done) return;
 
-  $("methods").addEventListener("click", function (e) {
-    var b = e.target.closest("[data-m]");
-    if (!b || state.done) return;
-    state.method = Number(b.getAttribute("data-m"));
-    renderMethods();
+    var more = e.target.closest("[data-more]");
+    if (more) {
+      var mk = more.getAttribute("data-more");
+      state.hintLv[mk] = Math.min((state.hintLv[mk] || 0) + 1, 3);
+      if (mk === "sx") renderChips(); else renderMethods();
+      return;
+    }
+
+    var btn = e.target.closest("[data-check]");
+    if (!btn) return;
+    var kind = btn.getAttribute("data-check");
+    var host = kind === "sx" ? $("chips") : $("methods");
+    var box = host.querySelector('[data-free="' + kind + '"]');
+    if (box) state.txt[kind] = box.value;
+    state.checked[kind] = true;
+    if (freeIncomplete(kind)) {
+      state.hintLv[kind] = Math.min((state.hintLv[kind] || 0) + 1, 3);
+    }
+    if (kind === "sx") renderChips(); else renderMethods();
+  }
+
+  $("chips").addEventListener("click", onFreeClick);
+  $("methods").addEventListener("click", onFreeClick);
+
+  // 输入时同步手写内容并刷新「检查一下」按钮状态
+  document.addEventListener("input", function (e) {
+    var t = e.target;
+    if (!t || !t.getAttribute) return;
+    var kind = t.getAttribute("data-free");
+    if (!kind) return;
+    state.txt[kind] = t.value;
+    var host = kind === "sx" ? $("chips") : $("methods");
+    var btn = host.querySelector('[data-check="' + kind + '"]');
+    if (btn) btn.disabled = !t.value.trim();
+    var cnt = host.querySelector('[data-cnt="' + kind + '"]');
+    if (cnt) cnt.textContent = countText(kind);
   });
 
   $("herbs").addEventListener("click", function (e) {
@@ -643,21 +943,25 @@
   $("diagBtn").addEventListener("click", showCandidates);
   $("submit").addEventListener("click", submit);
 
-  $("retry").addEventListener("click", function () {
-    state.sel = new Set();
-    state.method = null;
+  function retry() {
+    state.txt = { sx: "", zf: "" };
+    state.hintLv = { sx: 0, zf: 0 };
+    state.checked = {};
     state.herbs = new Set();
     state.cands = [];
+    state.done = false;
     renderAll();
-  });
+  }
+
+  $("retry").addEventListener("click", retry);
 
   $("prev").addEventListener("click", function () {
     state.idx = (state.idx - 1 + CASES.length) % CASES.length;
-    $("retry").click();
+    retry();
   });
   $("next").addEventListener("click", function () {
     state.idx = (state.idx + 1) % CASES.length;
-    $("retry").click();
+    retry();
   });
 
   $("ruleBtn").addEventListener("click", function () {

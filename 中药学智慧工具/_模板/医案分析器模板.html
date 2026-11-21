@@ -277,21 +277,19 @@
               { sx:[{n:"要点名", k:["同义词1","同义词2"]}, ...], bj:[...], zf:[...] }
      kpBad    写错方向才扣分（原文没有的信息 / 辨证相反）
               { sx:[{n:"汗出", k:["汗出"]}, ...], bj:[...], zf:[...] }
-     hint     逐层提示，只说往哪看，不给答案；每题 3 条
-              { sx:["提示1","提示2","提示3"], bj:[...], zf:[...] }
+     hint     逐层提示，每题 3 条，只说往哪看，不给答案 { sx:[...], bj:[...], zf:[...] }
      pool     可选药物 id 数组            10–14 味，含 4 味以上禁忌药
      need     必选药 {id:{w}}             仅计权重，不区分君臣佐使
      ok       可用非首选 {id:{w}}         bad 性味相悖 {id:{why}}
-     pairs    药对数组（推荐，可考多组配伍）
-              [{opts:[[a,b]], ans:"a|b", rel:"相须", relOpts:[...], meaning:"..."}]
-              单个药对可写 pair:{}，引擎自动兼容
+     pairs    药对数组 [{opts,ans,rel,relOpts,meaning,
+                purpose:{ pts:[{n,k:[]}], bad:[{n,k:[]}], hint:["…","…","…"] }}]
+               purpose 是"配伍目的"的判分要点：不能只写相须/相使，要写出增强了什么、解决了什么
      analysis 参考答案 {bj, zf, xuanyao, diff, orig}
               herb:{n,t,g,rows:[[功效,本案对应,配伍]]}  // 可选：围绕某味药展开
    评分：四诊 20 + 病机 25 + 治法 15 + 选药 25 + 配伍 15 = 100
-   作答：前三步手写（不再点选），点「检查一下」只提示方向，不直接给答案；
-        写入原文没有的信息或辨证相反会扣分。
+         配伍 15 分在多个药对间均分，每对按「药对 4 : 关系 4 : 目的 7」计
+   作答：四诊/病机/治法手写，配伍目的手写；药对、关系、药物点选
    答题码：学生提交后生成 TCM1.xxx.xxx；教师用 ?t=1 打开「教师汇总」粘贴统计
-   ★ 换章节时同步替换 HERB 药物表；配伍 15 分在多个药对间均分。
    ============================================================ */
 
   /* ============================================================
@@ -401,14 +399,38 @@
           ans:"mah|gui",
           rel:"相须",
           relOpts:["相须","相使","相畏","相杀","相反"],
-          meaning:"麻黄辛温，发汗解表、宣肺平喘、利水消肿，为君；桂枝辛甘温，解肌发表、温通经脉，为臣。二药同属辛温解表，性能功效相似，<span class='kw'>相须</span>为用，发汗解表之力倍增；表闭得开，则肺气自宣、水道自通。"
+          meaning:"麻黄辛温，发汗解表、宣肺平喘、利水消肿，为君；桂枝辛甘温，解肌发表、温通经脉，为臣。二药同属辛温解表，性能功效相似，<span class='kw'>相须</span>为用，发汗解表之力倍增；表闭得开，则肺气自宣、水道自通。",
+          purpose:{
+            pts:[
+              {n:"协同增效（1+1>2）", k:["增强","协同","加强","倍增","增效","相辅相成","合力"]},
+              {n:"发汗解表之力增强", k:["发汗","解表","解肌","散寒","开表","发表","透邪"]}
+            ],
+            bad:[{n:"相畏/相杀（方向错）", k:["相畏","相杀","相恶","减毒","解毒","降低毒性"]}],
+            hint:[
+              "先想二药合用的总效果：是互相削弱，还是让某个功效更强？",
+              "再看病人最难受的是什么——无汗、恶寒发热。两味辛温药合力，是要把这层“闭”打开，还是去治咳嗽？",
+              "别停在关系名上，说完整：合用后哪一项功效被增强、增强后解决了病人的哪个表现。"
+            ]
+          }
         },
         {
           opts:[["mah","xing"],["mah","gui"],["gui","xing"]],
           ans:"mah|xing",
           rel:"相使",
           relOpts:["相须","相使","相畏","相杀","相反"],
-          meaning:"麻黄辛温，开宣肺气而平喘，为君；苦杏仁苦降，降利肺气，为佐。二药一宣一降，以麻黄为主、杏仁为辅，<span class='kw'>相使</span>为用，恢复肺气宣降之常，故咳嗽声重、痰白而稀得平。"
+          meaning:"麻黄辛温，开宣肺气而平喘，为君；苦杏仁苦降，降利肺气，为佐。二药一宣一降，以麻黄为主、杏仁为辅，<span class='kw'>相使</span>为用，恢复肺气宣降之常，故咳嗽声重、痰白而稀得平。",
+          purpose:{
+            pts:[
+              {n:"一宣一降，恢复肺气宣降", k:["一宣一降","宣降","升降","宣发肃降","相反相成","一升一降","恢复肺气"]},
+              {n:"止咳平喘", k:["止咳","平喘","咳喘","气喘","咳嗽得平","喘平"]}
+            ],
+            bad:[{n:"相畏/相杀（方向错）", k:["相畏","相杀","相恶","减毒","解毒","降低毒性"]}],
+            hint:[
+              "看两味药的走向：麻黄主宣、苦杏仁主降。一上一下合起来，是为了把肺气的什么恢复正常？",
+              "病人最突出的症状是咳嗽声重、痰白而稀。两药合用，直接针对的是哪一组症状？",
+              "把“谁主宣、谁主降”和“最后止住了什么”连成一句话，才叫配伍目的；只写关系名等于没答。"
+            ]
+          }
         }
       ],
       analysis:{
@@ -431,7 +453,9 @@
     }
   ];
 
-  var state = { ci:0, step:0, free:{sx:"",bj:"",zf:""}, hintLv:{sx:0,bj:0,zf:0}, checked:{}, herbs:{}, pair:{}, rel:{}, done:false, score:null, t0:Date.now() };
+  var state = { ci:0, step:0, free:{sx:"",bj:"",zf:""}, hintLv:{sx:0,bj:0,zf:0}, checked:{},
+                pfree:{}, phint:{}, pchecked:{},
+                herbs:{}, pair:{}, rel:{}, done:false, score:null, t0:Date.now() };
 
   var $ = function (id) { return document.getElementById(id); };
   var esc = function (s) { return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;"); };
@@ -483,11 +507,24 @@
     };
   }
 
+  function purposeScore(i){
+    var pr = pairsOf(cur())[i], pz = pr.purpose;
+    if (!pz) return { hits:[], bads:[], total:0, score:1 };
+    var t = norm(state.pfree[i] || ""), hits = [], bads = [];
+    pz.pts.forEach(function(p, k){ if (hitKey(t, p.k)) hits.push(k); });
+    (pz.bad || []).forEach(function(p){ if (hitKey(t, p.k)) bads.push(p.n); });
+    return {
+      hits:hits, bads:bads, total:pz.pts.length,
+      score: Math.max(0, (hits.length - bads.length) / pz.pts.length)
+    };
+  }
+
   function reset(ci){
     state.ci = ci; state.step = 0;
     state.free = {sx:"", bj:"", zf:""};
     state.hintLv = {sx:0, bj:0, zf:0};
     state.checked = {};
+    state.pfree = {}; state.phint = {}; state.pchecked = {};
     state.herbs = {}; state.pair = {}; state.rel = {};
     state.done = false; state.score = null;
     state.t0 = Date.now();
@@ -595,6 +632,31 @@
         p += '<div class="grp"><div class="lbl">二者的配伍关系</div><div class="chips">' + pr.relOpts.map(function(r){
           return '<button class="chip blue '+(state.rel[i]===r?'on':'')+'" data-rel="'+i+':'+r+'">'+r+'</button>';
         }).join("") + '</div></div>';
+
+        // 配伍目的：写出来，不能只停在“相须/相使”
+        var ps = purposeScore(i);
+        p += '<div class="grp" id="pwrap'+i+'"><div class="lbl">这两味药配在一起，是为了达到什么目的？（不能只写“相须/相使”这类关系名）</div>'+
+             '<textarea class="free" data-pfree="'+i+'" placeholder="如：合用后……之力增强，从而……">'+esc(state.pfree[i]||"")+'</textarea>'+
+             '<div class="frow"><button class="btn" data-a="pcheck" data-pi="'+i+'">检查一下</button>'+
+             '<span class="cnt">'+(state.pchecked[i]
+                ? ('已写到 '+ps.hits.length+' / '+ps.total+' 层意思'+(ps.bads.length?'，方向需修正':''))
+                : '写清“增强了什么、解决了什么”，只写配伍关系不得分')+'</span></div>';
+        if (state.pchecked[i]){
+          if (ps.hits.length){
+            p += '<div class="fback"><div class="lbl">你已经写到</div><div class="chips">'+
+              ps.hits.map(function(k){ return '<span class="tag ok">'+pr.purpose.pts[k].n+'</span>'; }).join("")+'</div></div>';
+          }
+          if (ps.bads.length){
+            p += '<div class="fback"><div class="chips">'+ps.bads.map(function(n){ return '<span class="tag bad">'+n+'</span>'; }).join("")+'</div></div>';
+          }
+          if (ps.hits.length < ps.total){
+            var ph = pr.purpose.hint, plv = state.phint[i] || 1;
+            p += '<div class="hintbox"><div class="lbl">提示 '+plv+' / '+ph.length+'</div><p>'+ph[Math.max(0, plv-1)]+'</p>'+
+                 (plv < ph.length ? '<button class="btn small" data-a="pmore" data-pi="'+i+'">再给我一点提示</button>' : '')+'</div>';
+          } else {
+            p += '<div class="hintbox done"><p>目的写清楚了。</p></div>';
+          }
+        }
       });
       p += '<div class="grp"><div class="lbl" style="color:var(--ink-3)">提示：相须—性能功效相似，协同增效；相使—一药为主、另一药为辅以提高主药疗效；相畏—一药毒性被另一药减轻；相杀—一药消除另一药毒性；相反—合用产生毒副作用。</div></div>';
     }
@@ -613,8 +675,11 @@
       if (Object.keys(state.herbs).length < 2) { canNext = false; msg = "至少选 2 味药"; }
     }
     if (state.step === 4){
-      pairsOf(c).forEach(function(pr, i){ if (!state.pair[i] || !state.rel[i]) canNext = false; });
-      if (!canNext) msg = "请完成全部药对与配伍关系";
+      pairsOf(c).forEach(function(pr, i){
+        if (!state.pair[i] || !state.rel[i]) canNext = false;
+        if ((state.pfree[i] || "").trim().length < 4) canNext = false;
+      });
+      if (!canNext) msg = "药对、配伍关系与配伍目的都要填写";
     }
 
     var last = state.step === STEPS.length - 1;
@@ -673,17 +738,25 @@
     });
     if (!missH.length && !chosen.some(function(id){return !!c.bad[id];})) fb.push({t:"ok", x:"选药方向正确"});
 
-    // 配伍 15（多药对均分）
+    // 配伍 15（多药对均分：药对 4 / 关系 4 / 目的 7）
     var prs = pairsOf(c), pw = 15 / prs.length;
     s.pair = 0;
     prs.forEach(function(pr, i){
       var pairOk = state.pair[i] === pr.ans, relOk = state.rel[i] === pr.rel;
-      s.pair += (pairOk ? pw * 7 / 15 : 0) + (relOk ? pw * 8 / 15 : 0);
+      var pz = purposeScore(i);
+      var share = pr.purpose ? (pz.score * 7 / 15) : 0;
+      s.pair += (pairOk ? pw * 4 / 15 : 0) + (relOk ? pw * 4 / 15 : 0) + (pr.purpose ? pw * share : 0);
       var label = pr.ans.split("|").map(function(id){ return HERB[id].n; }).join(" + ");
       if (pairOk && relOk) fb.push({t:"ok", x:"药对「"+label+"」与「"+pr.rel+"」判断正确"});
       else {
         if (!pairOk) fb.push({t:"err", x:"核心药对应为「"+label+"」"});
         if (!relOk) fb.push({t:"err", x:"「"+label+"」的配伍关系应为「"+pr.rel+"」"});
+      }
+      if (pr.purpose){
+        if (pz.hits.length >= pz.total) fb.push({t:"ok", x:"「"+label+"」的配伍目的写清楚了"});
+        else fb.push({t:"warn", x:"「"+label+"」的配伍目的还缺："+
+          pr.purpose.pts.filter(function(_, k){ return pz.hits.indexOf(k) < 0; }).map(function(p){ return p.n; }).join("、")});
+        if (pz.bads.length) fb.push({t:"err", x:"「"+label+"」的配伍方向写反了："+pz.bads.join("、")});
       }
     });
 
@@ -712,6 +785,8 @@
       a:[Math.round(r.s.sx), Math.round(r.s.bj), Math.round(r.s.zf), Math.round(r.s.herb), Math.round(r.s.pair)],
       m:[maskOf(fxs.hits), maskOf(fbj.hits), maskOf(fzf.hits)],
       e:[fxs.bads.length, fbj.bads.length, fzf.bads.length],
+      pm:prs.map(function(pr, i){ return maskOf(purposeScore(i).hits); }),
+      pe:prs.map(function(pr, i){ return purposeScore(i).bads.length; }),
       h:Object.keys(state.herbs).sort().join(","),
       q:prs.map(function(pr, i){
         var oi = -1, ri = -1;
@@ -825,6 +900,17 @@
         '<td class="n '+(relOnly ? "hot" : "")+'">'+relOnly+'</td></tr>';
     }).join("");
 
+    // 配伍目的：各要点命中率
+    var pzRows = pairsOf(c).map(function(pr, i){
+      if (!pr.purpose) return "";
+      var lbl = pr.ans.split("|").map(function(id){ return HERB[id].n; }).join(" + ");
+      return pr.purpose.pts.map(function(pt, k){
+        var cnt = rows.filter(function(r){ return ((((r.pm || [])[i]) || 0) >> k) & 1; }).length;
+        return '<tr><td>'+lbl+' · '+pt.n+'</td><td class="n">'+cnt+'</td>'+
+          '<td class="n '+(cnt / n < 0.6 ? "hot" : "")+'">'+pct(cnt / n)+'%</td></tr>';
+      }).join("");
+    }).join("");
+
     var top = Math.max.apply(null, rows.map(function(p){ return p.s; }));
     var low = Math.min.apply(null, rows.map(function(p){ return p.s; }));
 
@@ -849,6 +935,8 @@
       '<table class="tbl"><tr><th>药物</th><th>定位</th><th>人数</th><th>比例</th></tr>'+hbRows+'</table>'+
       '<h4 style="font-size:13px;color:var(--zheng);margin:14px 0 6px">配伍 · 药对判断</h4>'+
       '<table class="tbl"><tr><th>药对</th><th>全对人数</th><th>全对率</th><th>仅关系对</th></tr>'+prRows+'</table>'+
+      '<h4 style="font-size:13px;color:var(--zheng);margin:14px 0 6px">配伍目的 · 各要点命中率</h4>'+
+      '<table class="tbl"><tr><th>药对 · 目的要点</th><th>写到人数</th><th>命中率</th></tr>'+pzRows+'</table>'+
       '<p class="desc" style="margin-top:4px">误读/误判人数：四诊 '+eCnt[0]+' 人 · 病机 '+eCnt[1]+' 人 · 治法 '+eCnt[2]+
       ' 人。红色为全班集中问题，可直接作为讲评切入点。</p>';
   }
@@ -856,13 +944,19 @@
   function exportCsv(){
     if (!lastRows.length) { alert("请先点击「统计」。"); return; }
     var c = cur();
-    var head = ["序号","总分","四诊","病机","治法","选药","配伍","用时秒","四诊要点","病机要点","治法要点","已选药物","药对判定"];
+    var head = ["序号","总分","四诊","病机","治法","选药","配伍","用时秒","四诊要点","病机要点","治法要点","已选药物","药对判定","配伍目的"];
     var lines = [head.join(",")];
     lastRows.forEach(function(p, i){
       var pick = function(kind, idx){
         var mask = (p.m && p.m[idx]) || 0;
         return c.kp[kind].filter(function(_, k){ return (mask >> k) & 1; }).map(function(q){ return q.n; }).join(" ");
       };
+      var pzTxt = pairsOf(c).map(function(pr, k){
+        if (!pr.purpose) return "";
+        var m2 = (p.pm && p.pm[k]) || 0;
+        return pr.ans.split("|").map(function(id){ return HERB[id].n; }).join("+") + "：" +
+          pr.purpose.pts.filter(function(_, j){ return (m2 >> j) & 1; }).map(function(q){ return q.n; }).join("、");
+      }).filter(Boolean).join(" ; ");
       var hb = p.h.split(",").filter(Boolean).map(function(id){ return HERB[id] ? HERB[id].n : id; }).join(" ");
       var pr = (p.q || "").split(";").map(function(seg, k){
         var pair = pairsOf(c)[k];
@@ -871,7 +965,7 @@
         return (o ? HERB[o[0]].n + "+" + HERB[o[1]].n : "?") + "/" + (pair.relOpts[Number(ab[1])] || "?");
       }).join(" ; ");
       var row = [i + 1, p.s, p.a[0], p.a[1], p.a[2], p.a[3], p.a[4], p.t,
-                 pick("sx",0), pick("bj",1), pick("zf",2), hb, pr];
+                 pick("sx",0), pick("bj",1), pick("zf",2), hb, pr, pzTxt];
       lines.push(row.map(function(x){ return '"' + String(x).replace(/"/g, '""') + '"'; }).join(","));
     });
     var blob = new Blob(["\ufeff" + lines.join("\r\n")], {type:"text/csv;charset=utf-8"});
@@ -928,7 +1022,7 @@
         '<h4>鉴别要点</h4><p>'+a.diff+'</p>'+
       '</div>'+
       '<details class="tpl"><summary>教师用：新增医案的字段格式</summary><pre>'+
-      esc("{\n  id:\"a2\", title:\"案名\", src:\"出处\",\n  text:\"病案原文（可用 <em> 标出关键句）\",\n  meta:[\"性别·年龄\",\"季节\"], hint:\"读案提示\",\n  kp:{                       // 自由作答的判分要点，每组同义词命中任一即算答到\n    sx:[{n:\"要点名\", k:[\"同义词1\",\"同义词2\"]}, ...],\n    bj:[...], zf:[...]\n  },\n  kpBad:{                    // 写错方向才扣分（原文没有 / 辨证相反）\n    sx:[{n:\"汗出\", k:[\"汗出\"]}, ...], bj:[...], zf:[...]\n  },\n  hint:{                     // 逐层提示，只说往哪看，不给答案\n    sx:[\"提示1\",\"提示2\",\"提示3\"], bj:[...], zf:[...]\n  },\n  pool:[\"mah\",\"gui\",...],\n  need:{ mah:{w:5} }, ok:{ jing:{w:2} },\n  bad:{ bo:{why:\"性凉相悖\"} },\n  pairs:[\n    { opts:[[\"mah\",\"gui\"],[\"mah\",\"xing\"]], ans:\"mah|gui\", rel:\"相须\",\n      relOpts:[\"相须\",\"相使\",\"相畏\",\"相杀\",\"相反\"], meaning:\"...\" }\n  ],\n  analysis:{ bj:\"...\", zf:\"...\", xuanyao:\"选药思路\", diff:\"...\",\n             herb:{ n:\"麻黄\", t:\"性味归经\", g:\"功效\",\n                    rows:[[\"功效\",\"本案对应\",\"配伍\"]] },\n             orig:\"原案辨证与用方\" }\n}")+
+      esc("{\n  id:\"a2\", title:\"案名\", src:\"出处\",\n  text:\"病案原文（可用 <em> 标出关键句）\",\n  meta:[\"性别·年龄\",\"季节\"], hint:\"读案提示\",\n  kp:{                       // 自由作答的判分要点，每组同义词命中任一即算答到\n    sx:[{n:\"要点名\", k:[\"同义词1\",\"同义词2\"]}, ...],\n    bj:[...], zf:[...]\n  },\n  kpBad:{                    // 写错方向才扣分（原文没有 / 辨证相反）\n    sx:[{n:\"汗出\", k:[\"汗出\"]}, ...], bj:[...], zf:[...]\n  },\n  hint:{                     // 逐层提示，只说往哪看，不给答案\n    sx:[\"提示1\",\"提示2\",\"提示3\"], bj:[...], zf:[...]\n  },\n  pool:[\"mah\",\"gui\",...],\n  need:{ mah:{w:5} }, ok:{ jing:{w:2} },\n  bad:{ bo:{why:\"性凉相悖\"} },\n  pairs:[\n    { opts:[[\"mah\",\"gui\"],[\"mah\",\"xing\"]], ans:\"mah|gui\", rel:\"相须\",\n      relOpts:[\"相须\",\"相使\",\"相畏\",\"相杀\",\"相反\"], meaning:\"...\",\n      purpose:{ pts:[{n:\"协同增效\",k:[\"增强\",\"协同\"]},{n:\"发汗解表增强\",k:[\"发汗\",\"解表\"]}],\n                bad:[{n:\"相畏/相杀\",k:[\"相畏\",\"相杀\"]}], hint:[\"提示1\",\"提示2\",\"提示3\"] } }\n  ],\n  analysis:{ bj:\"...\", zf:\"...\", xuanyao:\"选药思路\", diff:\"...\",\n             herb:{ n:\"麻黄\", t:\"性味归经\", g:\"功效\",\n                    rows:[[\"功效\",\"本案对应\",\"配伍\"]] },\n             orig:\"原案辨证与用方\" }\n}")+
       '</pre></details>';
 
     $("actions").innerHTML =
@@ -942,9 +1036,9 @@
   /* ---------- 事件 ---------- */
   document.addEventListener("input", function (e) {
     var ta = e.target;
-    if (!ta || !ta.dataset || !ta.dataset.free) return;
-    state.free[ta.dataset.free] = ta.value;
-    renderActions();
+    if (!ta || !ta.dataset) return;
+    if (ta.dataset.free){ state.free[ta.dataset.free] = ta.value; renderActions(); return; }
+    if (ta.dataset.pfree !== undefined){ state.pfree[ta.dataset.pfree] = ta.value; renderActions(); }
   });
 
   document.addEventListener("click", function (e) {
@@ -988,6 +1082,27 @@
       var kk = FREE_KIND[state.step];
       state.hintLv[kk] = Math.min((state.hintLv[kk] || 0) + 1, cur().hint[kk].length);
       renderPanel();
+      return;
+    }
+    if (act === "pcheck"){
+      var pi = a.dataset.pi, pbox = document.querySelector('[data-pfree="'+pi+'"]');
+      if (pbox) state.pfree[pi] = pbox.value;
+      state.pchecked[pi] = true;
+      var pz0 = purposeScore(pi);
+      if (pz0.hits.length < pz0.total){
+        state.phint[pi] = Math.min((state.phint[pi] || 0) + 1, pairsOf(cur())[pi].purpose.hint.length);
+      }
+      renderAll();
+      var pw0 = $("pwrap"+pi);
+      if (pw0 && pw0.scrollIntoView) pw0.scrollIntoView({block:"nearest"});
+      return;
+    }
+    if (act === "pmore"){
+      var pj = a.dataset.pi;
+      state.phint[pj] = Math.min((state.phint[pj] || 0) + 1, pairsOf(cur())[pj].purpose.hint.length);
+      renderAll();
+      var pw1 = $("pwrap"+pj);
+      if (pw1 && pw1.scrollIntoView) pw1.scrollIntoView({block:"nearest"});
       return;
     }
     if (act === "next") { state.step++; state.done = false; renderAll(); }
